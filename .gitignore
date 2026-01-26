@@ -1,0 +1,42 @@
+# This file ignores build directories and project tool directories.
+
+# Project-specific settings (put your files here)
+
+# Bower
+bower_components/
+
+# Build directories
+build/
+.cache/
+.next/
+
+# Composer
+vendor/
+
+# eslint
+.eslintcache
+
+# Grunt
+.grunt/
+
+# Minified css/js files
+*.min.*
+
+# Node
+.node_repl_history
+.npm/
+node_modules/
+npm-debug.log*
+
+# PHPUnit
+.phpunit.result.cache
+
+# Python
+*.pyc
+__pycache__/
+*.pyo
+
+# Symfony
+/.env.local.php
+parameters.yml
+/var/

@@ -1,0 +1,48 @@
+{
+    "name": "douglasgreen/feed-reader",
+    "description": "RSS feed reader",
+    "type": "project",
+    "license": "MIT",
+    "require": {
+        "php": ">=8.3",
+        "douglasgreen/pagebuilder": "dev-main",
+        "symfony/http-foundation": "^6.4",
+        "symfony/yaml": "^6.4",
+        "twig/twig": "^3.22"
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.92",
+        "phpstan/phpstan": "^2.1",
+        "rector/rector": "^2.3"
+    },
+    "autoload": {
+        "psr-4": {
+            "DouglasGreen\\FeedReader\\": "src/"
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/douglasgreen/pagebuilder"
+        }
+    ],
+    "config": {
+        "platform": {
+            "php": "8.3"
+        },
+        "sort-packages": true
+    },
+    "scripts": {
+        "lint": [
+            "php-cs-fixer fix --dry-run --verbose",
+            "phpstan analyse",
+            "rector process --dry-run"
+        ],
+        "lint:fix": [
+            "php-cs-fixer fix",
+            "rector process"
+        ]
+    }
+}

@@ -1,0 +1,11 @@
+parameters:
+    database:
+        dsn: 'mysql:host=example.com;port=3306;dbname=FeedManager;charset=utf8mb4'
+        username: 'root'
+        password: ''
+
+    timezone: 'UTC'
+    display_timezone: 'America/New_York'
+
+    cache:
+        twig_cache_dir: 'var/cache/twig'
