@@ -502,7 +502,7 @@ final class FeedController
             WHERE i.feed_id = ?
               AND i.publish_date > ?
             ORDER BY i.publish_date DESC
-            LIMIT 50
+            LIMIT 100
         ");
         $stmt->execute([$feedId, $cutoffDate]);
         $rawItems = $stmt->fetchAll();
