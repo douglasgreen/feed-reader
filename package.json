@@ -1,0 +1,27 @@
+{
+  "_version": "1.1.0",
+  "_modified": "2026-02-22",
+  "name": "douglasgreen/feed-reader",
+  "description": "RSS feed reader",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "lint": "npm run lint:js && npm run lint:md",
+    "lint:js": "eslint . --ext .js,.ts,.vue,.yml,.yaml",
+    "lint:md": "markdownlint \"**/*.md\"",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0",
+    "eslint": "^9.0",
+    "eslint-config-prettier": "^10.1",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-prettier": "^5.5.5",
+    "eslint-plugin-security": "^4.0.0",
+    "eslint-plugin-unicorn": "^63.0.0",
+    "globals": "^17.3.0",
+    "markdownlint-cli": "^0.47.0",
+    "prettier": "^3.8.1",
+    "prettier-plugin-sql": "^0.19.2"
+  }
+}

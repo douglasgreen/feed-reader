@@ -1,0 +1,64 @@
+{
+  "_version": "1.1.0",
+  "_modified": "2026-02-22",
+  "tabWidth": 4,
+  "useTabs": false,
+  "semi": true,
+  "singleQuote": true,
+  "trailingComma": "all",
+  "bracketSpacing": true,
+  "bracketSameLine": false,
+  "arrowParens": "always",
+  "endOfLine": "lf",
+  "htmlWhitespaceSensitivity": "css",
+  "vueIndentScriptAndStyle": false,
+  "plugins": ["prettier-plugin-sh", "prettier-plugin-sql"],
+  "overrides": [
+    {
+      "files": ["*.html", "*.htm"],
+      "options": {
+        "tabWidth": 2
+      }
+    },
+    {
+      "files": "*.md",
+      "options": {
+        "tabWidth": 2,
+        "proseWrap": "preserve"
+      }
+    },
+    {
+      "files": "*.json",
+      "options": {
+        "tabWidth": 2
+      }
+    },
+    {
+      "files": ["*.yml", "*.yaml"],
+      "options": {
+        "tabWidth": 2,
+        "singleQuote": false
+      }
+    },
+    {
+      "files": "*.sh",
+      "options": {
+        "parser": "sh"
+      }
+    },
+    {
+      "files": "*.sql",
+      "options": {
+        "parser": "sql",
+        "language": "mysql",
+        "tabWidth": 4,
+        "keywordCase": "upper",
+        "dataTypeCase": "upper",
+        "identifierCase": "lower",
+        "printWidth": 120,
+        "expressionWidth": 120,
+        "linesBetweenQueries": 2
+      }
+    }
+  ]
+}
