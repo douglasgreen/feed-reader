@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "ee4eb17edfb03ba957bb3e1b642aed9d",
+    "content-hash": "8314969c2c4b903ca7ba2283b6725774",
     "packages": [
         {
             "name": "douglasgreen/pagebuilder",
@@ -897,26 +897,27 @@
         },
         {
             "name": "douglasgreen/code-linter",
-            "version": "v0.7.0",
+            "version": "v0.8.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/douglasgreen/code-linter.git",
-                "reference": "2deb0f91119744b5d2d7118e4bbfb2c88fad9674"
+                "reference": "66a8c11b760f2f17f922aa5662d592dfe8dc7a2b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/douglasgreen/code-linter/zipball/2deb0f91119744b5d2d7118e4bbfb2c88fad9674",
-                "reference": "2deb0f91119744b5d2d7118e4bbfb2c88fad9674",
+                "url": "https://api.github.com/repos/douglasgreen/code-linter/zipball/66a8c11b760f2f17f922aa5662d592dfe8dc7a2b",
+                "reference": "66a8c11b760f2f17f922aa5662d592dfe8dc7a2b",
                 "shasum": ""
             },
             "require": {
                 "nikic/php-parser": "^5.7",
-                "php": ">=8.3"
+                "php": "^8.3"
             },
             "require-dev": {
                 "friendsofphp/php-cs-fixer": "^3.94.2",
                 "phpstan/phpstan": "^2.1.39",
-                "rector/rector": "^2.3.7"
+                "phpunit/phpunit": "^12.5.14",
+                "rector/rector": "^2.3.8"
             },
             "bin": [
                 "bin/code-linter"
@@ -931,33 +932,12 @@
             "license": [
                 "MIT"
             ],
-            "authors": [
-                {
-                    "name": "Douglas Green",
-                    "email": "douglas@nurd.site",
-                    "homepage": "https://nurd.site/",
-                    "role": "Developer"
-                }
-            ],
             "description": "Code linter for PHP based on Nikic parser",
-            "homepage": "https://github.com/douglasgreen/code-linter",
-            "keywords": [
-                "ast",
-                "automation",
-                "cli",
-                "code quality",
-                "coding standards",
-                "linter",
-                "linting",
-                "php",
-                "php parser",
-                "static analysis"
-            ],
             "support": {
                 "issues": "https://github.com/douglasgreen/code-linter/issues",
-                "source": "https://github.com/douglasgreen/code-linter/tree/v0.7.0"
+                "source": "https://github.com/douglasgreen/code-linter/tree/v0.8.0"
             },
-            "time": "2026-02-23T01:14:35+00:00"
+            "time": "2026-02-23T21:16:37+00:00"
         },
         {
             "name": "douglasgreen/code-metrics",

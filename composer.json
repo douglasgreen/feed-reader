@@ -13,7 +13,7 @@
         "twig/twig": "^3.22"
     },
     "require-dev": {
-        "douglasgreen/code-linter": "^0.7.0",
+        "douglasgreen/code-linter": "^0.8.0",
         "douglasgreen/code-metrics": "^0.6.0",
         "friendsofphp/php-cs-fixer": "^3.94.2",
         "phpstan/phpstan": "^2.1.39",
