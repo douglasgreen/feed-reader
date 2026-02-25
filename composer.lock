@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "8314969c2c4b903ca7ba2283b6725774",
+    "content-hash": "b50da21037dd24a39922ba287683a4b1",
     "packages": [
         {
             "name": "douglasgreen/pagebuilder",
@@ -12,21 +12,16 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/douglasgreen/pagebuilder.git",
-                "reference": "2e5009439574d3169a3c5095bcfffe0d087f25d5"
+                "reference": "3e739b6e6c8f24a7016091654cb2e4c05bdd4043"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/douglasgreen/pagebuilder/zipball/2e5009439574d3169a3c5095bcfffe0d087f25d5",
-                "reference": "2e5009439574d3169a3c5095bcfffe0d087f25d5",
+                "url": "https://api.github.com/repos/douglasgreen/pagebuilder/zipball/3e739b6e6c8f24a7016091654cb2e4c05bdd4043",
+                "reference": "3e739b6e6c8f24a7016091654cb2e4c05bdd4043",
                 "shasum": ""
             },
             "require": {
                 "php": ">=8.3"
-            },
-            "require-dev": {
-                "friendsofphp/php-cs-fixer": "^3.92",
-                "phpstan/phpstan": "^2.1",
-                "rector/rector": "^2.3"
             },
             "default-branch": true,
             "type": "project",
@@ -34,17 +29,6 @@
                 "psr-4": {
                     "DouglasGreen\\PageBuilder\\": "src/"
                 }
-            },
-            "scripts": {
-                "lint": [
-                    "php-cs-fixer fix --dry-run --verbose",
-                    "phpstan analyse",
-                    "rector process --dry-run"
-                ],
-                "lint:fix": [
-                    "php-cs-fixer fix",
-                    "rector process"
-                ]
             },
             "license": [
                 "MIT"
@@ -54,7 +38,7 @@
                 "source": "https://github.com/douglasgreen/pagebuilder/tree/main",
                 "issues": "https://github.com/douglasgreen/pagebuilder/issues"
             },
-            "time": "2026-01-25T23:53:23+00:00"
+            "time": "2026-02-25T13:21:52+00:00"
         },
         {
             "name": "symfony/deprecation-contracts",
@@ -896,21 +880,22 @@
             "time": "2024-05-06T16:37:16+00:00"
         },
         {
-            "name": "douglasgreen/code-linter",
-            "version": "v0.8.0",
+            "name": "douglasgreen/php-linter",
+            "version": "v0.9.0",
             "source": {
                 "type": "git",
-                "url": "https://github.com/douglasgreen/code-linter.git",
-                "reference": "66a8c11b760f2f17f922aa5662d592dfe8dc7a2b"
+                "url": "https://github.com/douglasgreen/php-linter.git",
+                "reference": "4ba09f8a7d887be621318de74dffe9ec2d7c2f3f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/douglasgreen/code-linter/zipball/66a8c11b760f2f17f922aa5662d592dfe8dc7a2b",
-                "reference": "66a8c11b760f2f17f922aa5662d592dfe8dc7a2b",
+                "url": "https://api.github.com/repos/douglasgreen/php-linter/zipball/4ba09f8a7d887be621318de74dffe9ec2d7c2f3f",
+                "reference": "4ba09f8a7d887be621318de74dffe9ec2d7c2f3f",
                 "shasum": ""
             },
             "require": {
                 "nikic/php-parser": "^5.7",
+                "pdepend/pdepend": "^2.16.2",
                 "php": "^8.3"
             },
             "require-dev": {
@@ -920,7 +905,7 @@
                 "rector/rector": "^2.3.8"
             },
             "bin": [
-                "bin/code-linter"
+                "bin/php-linter"
             ],
             "type": "library",
             "autoload": {
@@ -934,74 +919,10 @@
             ],
             "description": "Code linter for PHP based on Nikic parser",
             "support": {
-                "issues": "https://github.com/douglasgreen/code-linter/issues",
-                "source": "https://github.com/douglasgreen/code-linter/tree/v0.8.0"
+                "issues": "https://github.com/douglasgreen/php-linter/issues",
+                "source": "https://github.com/douglasgreen/php-linter/tree/v0.9.0"
             },
-            "time": "2026-02-23T21:16:37+00:00"
-        },
-        {
-            "name": "douglasgreen/code-metrics",
-            "version": "v0.6.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/douglasgreen/code-metrics.git",
-                "reference": "bcc20cc5cfce9694933ee599dbb29a5accdddbf1"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/douglasgreen/code-metrics/zipball/bcc20cc5cfce9694933ee599dbb29a5accdddbf1",
-                "reference": "bcc20cc5cfce9694933ee599dbb29a5accdddbf1",
-                "shasum": ""
-            },
-            "require": {
-                "pdepend/pdepend": "^2.16.2",
-                "php": ">=8.3"
-            },
-            "require-dev": {
-                "friendsofphp/php-cs-fixer": "^3.94.2",
-                "phpstan/phpstan": "^2.1.39",
-                "rector/rector": "^2.3.7"
-            },
-            "bin": [
-                "bin/code-metrics"
-            ],
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "DouglasGreen\\CodeMetrics\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Douglas Green",
-                    "email": "douglas@nurd.site",
-                    "homepage": "https://nurd.site/",
-                    "role": "Developer"
-                }
-            ],
-            "description": "Code metrics for PHP using PDepend",
-            "homepage": "https://github.com/douglasgreen/code-metrics",
-            "keywords": [
-                "automation",
-                "cli",
-                "code metrics",
-                "code quality",
-                "coding standards",
-                "command-line interface",
-                "linting",
-                "php",
-                "php parser",
-                "static analysis"
-            ],
-            "support": {
-                "issues": "https://github.com/douglasgreen/code-metrics/issues",
-                "source": "https://github.com/douglasgreen/code-metrics/tree/v0.6.0"
-            },
-            "time": "2026-02-23T01:15:19+00:00"
+            "time": "2026-02-25T01:17:45+00:00"
         },
         {
             "name": "evenement/evenement",
@@ -1516,11 +1437,11 @@
         },
         {
             "name": "phpstan/phpstan",
-            "version": "2.1.39",
+            "version": "2.1.40",
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/c6f73a2af4cbcd99c931d0fb8f08548cc0fa8224",
-                "reference": "c6f73a2af4cbcd99c931d0fb8f08548cc0fa8224",
+                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/9b2c7aeb83a75d8680ea5e7c9b7fca88052b766b",
+                "reference": "9b2c7aeb83a75d8680ea5e7c9b7fca88052b766b",
                 "shasum": ""
             },
             "require": {
@@ -1565,7 +1486,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-02-11T14:48:56+00:00"
+            "time": "2026-02-23T15:04:35+00:00"
         },
         {
             "name": "phpunit/php-code-coverage",
