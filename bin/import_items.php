@@ -77,12 +77,8 @@ foreach ($feeds as $row) {
     $newCount = 0;
     if (!empty($items)) {
         $insertStmt = $pdo->prepare(
-            "INSERT INTO items (feed_id, title, link, content, publish_date, created_at) " .
-            "VALUES (?, ?, ?, ?, ?, NOW()) " .
-            "ON DUPLICATE KEY UPDATE " .
-            "title = VALUES(title), " .
-            "content = VALUES(content), " .
-            "publish_date = VALUES(publish_date)"
+            "INSERT IGNORE INTO items (feed_id, title, link, content, publish_date, created_at) " .
+            "VALUES (?, ?, ?, ?, ?, NOW())"
         );
 
         foreach ($items as $item) {
