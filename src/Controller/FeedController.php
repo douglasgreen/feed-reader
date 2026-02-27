@@ -6,7 +6,6 @@ use DateTime;
 use DateTimeZone;
 use DOMDocument;
 use DouglasGreen\FeedReader\AppContainer;
-use DouglasGreen\PageBuilder\PageBuilder;
 use PDO;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -687,61 +686,12 @@ final class FeedController
 
         $twig = $this->app->getTwig();
 
-        // Render sections via Twig
-        $header = $twig->render('header', $data);
-        $leftSidebar = $twig->render('left_sidebar', $data);
-        $mainContent = $twig->render('main_content', $data);
-        $footer = $twig->render('footer', [
-            'memory' => $this->app->getMemoryUsage(),
-            'time' => number_format($this->app->getElapsedTime(), 3),
-        ]);
-        $modals = $twig->render('modals', $data);
+        // Add layout data
+        $data['memory'] = $this->app->getMemoryUsage();
+        $data['time'] = number_format($this->app->getElapsedTime(), 3);
 
-        // Build final page with PageBuilder
-        $builder = new PageBuilder();
-        $builder->setTitle($data['pageTitle'] ?? 'RSS Feed Reader')
-            ->setContainerFluid()
-            ->setLayoutColumns(2, 10, 0);
-
-        // Integrated Bootstrap and assets using new PageBuilder API
-        $builder->addBootstrap();
-        $builder->addStylesheet('https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css');
-        $builder->addScript('assets/app.js', 'body');
-
-        // Inline CSS previously in Twig layout using standard location
-        $builder->addInlineStyle(<<<'CSS'
-.group-header .btn-group-action,
-.feed-item .btn-feed-action,
-.filter-item .btn-filter-action {
-    opacity: 0;
-    transition: opacity 0.2s ease-in-out;
-}
-.feed-item.active,
-.list-group-item.active {
-    font-weight: bold;
-}
-.group-header:hover .btn-group-action,
-.feed-item:hover .btn-feed-action,
-.filter-item:hover .btn-filter-action {
-    opacity: 1;
-}
-.item-link:hover {
-    color: var(--bs-primary) !important;
-}
-#right {
-    display: none;
-}
-CSS
-            , 'head');
-
-        // Configure layout sections
-        $builder->setSection('header', $header)
-            ->setSection('left', $leftSidebar)
-            ->setSection('main', $mainContent)
-            ->setSection('right', '')
-            ->setSection('footer', $footer . $modals);
-
-        return $builder->build();
+        // Render the full page using layout template
+        return $twig->render('layout', $data);
     }
 
     private function registerTemplates(): void
@@ -937,6 +887,66 @@ TWIG
         </div>
     </div>
 </footer>
+TWIG
+        );
+
+        // Layout template (full HTML page)
+        $loader->setTemplate(
+            'layout',
+            <<<'TWIG'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ pageTitle }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+.group-header .btn-group-action,
+.feed-item .btn-feed-action,
+.filter-item .btn-filter-action {
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+}
+.feed-item.active,
+.list-group-item.active {
+    font-weight: bold;
+}
+.group-header:hover .btn-group-action,
+.feed-item:hover .btn-feed-action,
+.filter-item:hover .btn-filter-action {
+    opacity: 1;
+}
+.item-link:hover {
+    color: var(--bs-primary) !important;
+}
+#right {
+    display: none;
+}
+    </style>
+</head>
+<body>
+    {% include 'header' %}
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-2 p-0">
+                {% include 'left_sidebar' %}
+            </div>
+            <div class="col-md-10">
+                {% include 'main_content' %}
+            </div>
+        </div>
+    </div>
+
+    {% include 'footer' %}
+    {% include 'modals' %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/app.js"></script>
+</body>
+</html>
 TWIG
         );
 
