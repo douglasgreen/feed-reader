@@ -1,11 +1,8 @@
 <?php
-// version: 1.0.0
-// modified: 2026-02-20
+
+// modified: 2026-02-26
 
 use Rector\Config\RectorConfig;
-use Rector\DeadCode\Rector\ClassMethod\RemoveUselessParamTagRector;
-use Rector\DeadCode\Rector\ClassMethod\RemoveUselessReturnTagRector;
-use Rector\DeadCode\Rector\Property\RemoveUselessVarTagRector;
 use Rector\Php81\Rector\ClassMethod\NewInInitializerRector;
 use Rector\Strict\Rector\Empty_\DisallowedEmptyRuleFixerRector;
 use Rector\TypeDeclaration\Rector\StmtsAwareInterface\DeclareStrictTypesRector;
@@ -36,11 +33,6 @@ return RectorConfig::configure()
         NewInInitializerRector::class => [
             __DIR__ . '/src/AppContainer.php',
         ],
-
-        // These tags are still needed.
-        RemoveUselessParamTagRector::class,
-        RemoveUselessReturnTagRector::class,
-        RemoveUselessVarTagRector::class,
     ])
     ->withRules([
         DeclareStrictTypesRector::class,

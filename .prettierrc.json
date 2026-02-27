@@ -1,6 +1,5 @@
 {
-  "_version": "1.1.0",
-  "_modified": "2026-02-22",
+  "modified": "2026-02-26",
   "tabWidth": 4,
   "useTabs": false,
   "semi": true,
@@ -24,7 +23,8 @@
       "files": "*.md",
       "options": {
         "tabWidth": 2,
-        "proseWrap": "preserve"
+        "printWidth": 100,
+        "proseWrap": "always"
       }
     },
     {
