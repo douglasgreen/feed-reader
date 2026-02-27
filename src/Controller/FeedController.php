@@ -403,8 +403,7 @@ final class FeedController
             $currentFeedData = null;
         }
 
-        // Build page using PageBuilder and Twig
-        $html = $this->buildPageWithBuilder([
+        $html = $this->buildPage([
             'pageTitle' => $pageTitle,
             'currentFeed' => $currentFeed,
             'searchQuery' => $searchQuery,
@@ -679,7 +678,7 @@ final class FeedController
         return (int) $stmt->fetchColumn() === 0;
     }
 
-    private function buildPageWithBuilder(array $data): string
+    private function buildPage(array $data): string
     {
         // Register inline templates in Twig
         $this->registerTemplates();

@@ -6,7 +6,6 @@
     "license": "MIT",
     "require": {
         "php": "^8.3",
-        "douglasgreen/pagebuilder": "dev-main",
         "symfony/http-foundation": "^6.4",
         "symfony/yaml": "^6.4",
         "twig/twig": "^3.22"
@@ -23,14 +22,6 @@
             "DouglasGreen\\FeedReader\\": "src/"
         }
     },
-    "minimum-stability": "dev",
-    "prefer-stable": true,
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://github.com/douglasgreen/pagebuilder"
-        }
-    ],
     "config": {
         "platform": {
             "php": "8.3"
