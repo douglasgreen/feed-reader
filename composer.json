@@ -1,5 +1,5 @@
 {
-    "modified": "2026-02-26",
+    "modified": "2026-02-28",
     "name": "douglasgreen/feed-reader",
     "description": "RSS feed reader",
     "type": "project",
@@ -11,7 +11,7 @@
         "twig/twig": "^3.22"
     },
     "require-dev": {
-        "douglasgreen/php-linter": "^0.9.0",
+        "douglasgreen/php-linter": "^1.0.0",
         "friendsofphp/php-cs-fixer": "^3.94.2",
         "phpstan/phpstan": "^2.1.39",
         "phpunit/phpunit": "^12.5.14",
