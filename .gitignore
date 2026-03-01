@@ -1,4 +1,4 @@
-# modified: 2026-02-26
+# modified: 2026-02-28
 
 # This file ignores build directories and project tool directories.
 # Remove composer.lock and package-lock.json for project type, leave in library type.
@@ -6,7 +6,7 @@
 # Project-specific settings (put your files here)
 
 # AI
-.aider*
+.cecli*
 
 # Build directories
 build/
