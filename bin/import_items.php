@@ -25,8 +25,9 @@ if (!$dbConfig || empty($dbConfig['dsn']) || !isset($dbConfig['username']) || !a
     exit(1);
 }
 
-$options = getopt('q');
+$options = getopt('qf');
 $quiet = isset($options['q']);
+$force = isset($options['f']);
 
 try {
     $pdo = new PDO($dbConfig['dsn'], $dbConfig['username'], $dbConfig['password']);
@@ -61,7 +62,7 @@ foreach ($feeds as $row) {
     $now = new DateTime();
     $nextRead = new DateTime($nextReadStr);
 
-    if ($nextRead > $now) {
+    if ($nextRead > $now && !$force) {
         continue; // Not due yet
     }
 
