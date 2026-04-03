@@ -6,6 +6,7 @@ use DateTime;
 use DateTimeZone;
 use DOMDocument;
 use DouglasGreen\FeedReader\AppContainer;
+use DouglasGreen\FeedReader\Controller\ImportController;
 use PDO;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -65,6 +66,9 @@ final class FeedController
                     return $this->editGroup();
                 case 'delete_group':
                     return $this->deleteGroup();
+                case 'import_feeds':
+                    $importController = new ImportController($this->app);
+                    return $importController->execute();
                 default:
                     throw new \Exception('Unknown action: ' . $action);
             }
@@ -800,6 +804,13 @@ TWIG
         <button type="button" class="btn btn-sm btn-outline-secondary w-100" data-bs-toggle="modal" data-bs-target="#manageFiltersModal">
             <i class="bi bi-sliders"></i> Manage Filters
         </button>
+        <form method="POST" class="mt-2">
+            <input type="hidden" name="action" value="import_feeds">
+            <input type="hidden" name="force" value="1">
+            <button type="submit" class="btn btn-sm btn-success w-100" onclick="return confirm('This will fetch all feeds immediately. Continue?');">
+                <i class="bi bi-cloud-download"></i> Import All Feeds
+            </button>
+        </form>
     </div>
 </nav>
 TWIG
