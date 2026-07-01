@@ -5,6 +5,8 @@ namespace DouglasGreen\FeedReader;
 use PDO;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Session\Session;
+use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
+use Symfony\Component\HttpFoundation\Session\Storage\NativeSessionStorage;
 use Symfony\Component\Yaml\Yaml;
 use Twig\Environment;
 use Twig\Loader\ArrayLoader;
@@ -100,7 +102,13 @@ final class AppContainer
     public function getSession(): Session
     {
         if ($this->session === null) {
-            $this->session = new Session();
+            if (PHP_SAPI === 'cli') {
+                // Use Mock storage for CLI (cron jobs, terminal)
+                $this->session = new Session(new MockArraySessionStorage());
+            } else {
+                // Use Native storage for Web requests
+                $this->session = new Session(new NativeSessionStorage());
+            }
             if (!$this->session->isStarted()) {
                 $this->session->start();
             }
