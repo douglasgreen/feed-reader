@@ -19,6 +19,7 @@ final class AppContainer
     private static ?self $instance = null;
 
     private array $config;
+    private bool $cli = false;
     private ?PDO $pdo = null;
     private ?Request $request = null;
     private ?Session $session = null;
@@ -41,10 +42,13 @@ final class AppContainer
         throw new \Exception("Cannot unserialize singleton");
     }
 
-    public static function getInstance(): self
+    public static function getInstance(?bool $cli = null): self
     {
         if (self::$instance === null) {
             self::$instance = new self();
+        }
+        if ($cli !== null) {
+            self::$instance->cli = $cli;
         }
         return self::$instance;
     }
@@ -102,8 +106,8 @@ final class AppContainer
     public function getSession(): Session
     {
         if ($this->session === null) {
-            if (PHP_SAPI === 'cli') {
-                // Use Mock storage for CLI (cron jobs, terminal)
+            if ($this->cli || PHP_SAPI === 'cli') {
+                // Use Mock storage for CLI (cron jobs, terminal, CGI cron invocations)
                 $this->session = new Session(new MockArraySessionStorage());
             } else {
                 // Use Native storage for Web requests

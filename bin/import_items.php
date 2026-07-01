@@ -9,7 +9,7 @@ use DouglasGreen\FeedReader\Controller\ImportController;
 $options = getopt('qf');
 $quiet = isset($options['q']);
 
-$app = AppContainer::getInstance();
+$app = AppContainer::getInstance(true);
 $controller = new ImportController($app);
 
 // CLI always forces import regardless of next_read schedule
