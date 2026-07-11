@@ -14,6 +14,7 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Session\Session;
+use Twig\Loader\ArrayLoader;
 
 /**
  * Main feed reader controller
@@ -82,8 +83,8 @@ final readonly class FeedController
 
     private function addFeed(): RedirectResponse
     {
-        $name = trim($this->request->request->get('feed_name', ''));
-        $url = trim($this->request->request->get('feed_url', ''));
+        $name = trim((string) $this->request->request->get('feed_name', ''));
+        $url = trim((string) $this->request->request->get('feed_url', ''));
         $groupId = (int) $this->request->request->get('group_id', 0);
 
         $this->validateFeedInput($name, $url, $groupId);
@@ -117,8 +118,8 @@ final readonly class FeedController
     private function editFeed(): RedirectResponse
     {
         $feedId = (int) $this->request->request->get('feed_id', 0);
-        $name = trim($this->request->request->get('feed_name', ''));
-        $url = trim($this->request->request->get('feed_url', ''));
+        $name = trim((string) $this->request->request->get('feed_name', ''));
+        $url = trim((string) $this->request->request->get('feed_url', ''));
         $groupId = (int) $this->request->request->get('group_id', 0);
 
         if ($feedId <= 0) {
@@ -201,7 +202,7 @@ final readonly class FeedController
 
     private function addFilter(): RedirectResponse
     {
-        $filterString = trim($this->request->request->get('filter_string', ''));
+        $filterString = trim((string) $this->request->request->get('filter_string', ''));
 
         if (empty($filterString)) {
             throw new Exception('Filter string is required');
@@ -227,7 +228,7 @@ final readonly class FeedController
     private function editFilter(): RedirectResponse
     {
         $filterId = (int) $this->request->request->get('filter_id', 0);
-        $filterString = trim($this->request->request->get('filter_string', ''));
+        $filterString = trim((string) $this->request->request->get('filter_string', ''));
 
         if ($filterId <= 0) {
             throw new Exception('Invalid filter ID');
@@ -293,7 +294,7 @@ final readonly class FeedController
 
     private function addGroup(): RedirectResponse
     {
-        $groupName = trim($this->request->request->get('group_name', ''));
+        $groupName = trim((string) $this->request->request->get('group_name', ''));
 
         if (empty($groupName)) {
             throw new Exception('Group name is required');
@@ -319,7 +320,7 @@ final readonly class FeedController
     private function editGroup(): RedirectResponse
     {
         $groupId = (int) $this->request->request->get('group_id', 0);
-        $groupName = trim($this->request->request->get('group_name', ''));
+        $groupName = trim((string) $this->request->request->get('group_name', ''));
 
         if ($groupId <= 0) {
             throw new Exception('Invalid group ID');
@@ -389,8 +390,8 @@ final readonly class FeedController
 
     private function displayPage(): Response
     {
-        $currentFeed = $this->request->query->get('feed', '');
-        $searchQuery = $this->request->query->get('search', '');
+        $currentFeed = (string) $this->request->query->get('feed', '');
+        $searchQuery = (string) $this->request->query->get('search', '');
 
         // Load all data
         $groupedFeeds = $this->loadGroupedFeeds();
@@ -401,7 +402,7 @@ final readonly class FeedController
         // Load items based on search or feed
         if (!empty($searchQuery)) {
             $items = $this->searchItems(trim($searchQuery), $allFilters);
-            $pageTitle = 'Search Results: ' . htmlspecialchars($searchQuery);
+            $pageTitle = 'Search Results: ' . htmlspecialchars($searchQuery, ENT_QUOTES, 'UTF-8');
             $currentFeedData = null;
         } elseif ($currentFeed !== '' && is_numeric($currentFeed)) {
             $result = $this->loadFeedItems((int) $currentFeed, $allFilters);
@@ -430,6 +431,9 @@ final readonly class FeedController
         return new Response($html);
     }
 
+    /**
+     * @return array<string, array{group_id: mixed, feeds: list<array<string, mixed>>}>
+     */
     private function loadGroupedFeeds(): array
     {
         $stmt = $this->pdo->query('
@@ -440,6 +444,10 @@ final readonly class FeedController
             JOIN feeds f ON g.id = f.group_id
             ORDER BY g.name, f.name
         ');
+        if ($stmt === false) {
+            throw new Exception('Failed to load feeds');
+        }
+
         $feeds = $stmt->fetchAll();
 
         $grouped = [];
@@ -455,18 +463,37 @@ final readonly class FeedController
         return $grouped;
     }
 
+    /**
+     * @return array<int, array{id: mixed, name: mixed}>
+     */
     private function loadAllGroups(): array
     {
         $stmt = $this->pdo->query('SELECT id, name FROM groups ORDER BY name');
+        if ($stmt === false) {
+            throw new Exception('Failed to load groups');
+        }
+
         return $stmt->fetchAll();
     }
 
+    /**
+     * @return array<int, array{id: mixed, filter_string: string}>
+     */
     private function loadAllFilters(): array
     {
         $stmt = $this->pdo->query('SELECT id, filter_string FROM filters ORDER BY filter_string');
+        if ($stmt === false) {
+            throw new Exception('Failed to load filters');
+        }
+
         return $stmt->fetchAll();
     }
 
+    /**
+     * @param array<string, array{group_id: mixed, feeds: list<array<string, mixed>>}> $groupedFeeds
+     *
+     * @return array<string, int>
+     */
     private function calculateFeedCounts(array $groupedFeeds): array
     {
         $counts = [];
@@ -488,6 +515,15 @@ final readonly class FeedController
         return $counts;
     }
 
+    /**
+     * @param array<int, array{id: mixed, filter_string: string}> $filters
+     *
+     * @return array{
+     *     items: list<array<string, mixed>>,
+     *     title: string,
+     *     feedData: array<string, mixed>|null
+     * }
+     */
     private function loadFeedItems(int $feedId, array $filters): array
     {
         $stmt = $this->pdo->prepare('SELECT id, name, last_viewed FROM feeds WHERE id = ?');
@@ -538,6 +574,11 @@ final readonly class FeedController
         ];
     }
 
+    /**
+     * @param array<int, array{id: mixed, filter_string: string}> $filters
+     *
+     * @return list<array<string, mixed>>
+     */
     private function searchItems(string $query, array $filters): array
     {
         $cutoffDate = date('Y-m-d H:i:s', strtotime('-30 days'));
@@ -560,9 +601,18 @@ final readonly class FeedController
         return $this->processItems($rawItems, $filters, null);
     }
 
+    /**
+     * @param array<int, array<string, mixed>> $rawItems
+     * @param array<int, array{id: mixed, filter_string: string}> $filters
+     *
+     * @return list<array<string, mixed>>
+     */
     private function processItems(array $rawItems, array $filters, ?string $lastViewed): array
     {
-        $filterStrings = array_column($filters, 'filter_string');
+        $filterStrings = array_map(
+            static fn (array $filter): string => $filter['filter_string'],
+            $filters,
+        );
         $allowedTags = [
             '<a>', '<audio>', '<b>', '<blockquote>', '<br>', '<caption>', '<code>',
             '<col>', '<colgroup>', '<dd>', '<del>', '<dl>', '<dt>', '<em>',
@@ -606,6 +656,12 @@ final readonly class FeedController
         return $items;
     }
 
+    /**
+     * @param array<string, mixed> $item
+     * @param array<int, string> $filters
+     *
+     * @return array<int, string>
+     */
     private function getMatchingFilters(array $item, array $filters): array
     {
         $lowTitle = strtolower($item['title'] ?? '');
@@ -662,6 +718,10 @@ final readonly class FeedController
 
         libxml_clear_errors();
 
+        if ($fixedHtml === false) {
+            return '';
+        }
+
         return substr($fixedHtml, 5, -6);
     }
 
@@ -697,6 +757,9 @@ final readonly class FeedController
         return (int) $stmt->fetchColumn() === 0;
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
     private function buildPage(array $data): string
     {
         // Register inline templates in Twig
@@ -716,6 +779,9 @@ final readonly class FeedController
     {
         $twig = $this->app->getTwig();
         $loader = $twig->getLoader();
+        if (!$loader instanceof ArrayLoader) {
+            throw new Exception('Twig loader must be an ArrayLoader');
+        }
 
         // Header with search bar
         $loader->setTemplate(
