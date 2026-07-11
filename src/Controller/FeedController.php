@@ -564,9 +564,7 @@ final class FeedController
         $items = [];
 
         foreach ($rawItems as $raw) {
-            if ($this->shouldSkipItem($raw, $filterStrings)) {
-                continue;
-            }
+            $matchedFilters = $this->getMatchingFilters($raw, $filterStrings);
 
             $pubDate = new DateTime($raw['publish_date'], new DateTimeZone('UTC'));
             $pubDate->setTimezone($displayTz);
@@ -589,16 +587,19 @@ final class FeedController
                 'feed' => $raw['feed_name'] ?? '',
                 'isNew' => $isNew,
                 'relativeTime' => $this->relativeTime($pubDate),
+                'isFiltered' => !empty($matchedFilters),
+                'matchedFilters' => $matchedFilters,
             ];
         }
 
         return $items;
     }
 
-    private function shouldSkipItem(array $item, array $filters): bool
+    private function getMatchingFilters(array $item, array $filters): array
     {
         $lowTitle = strtolower($item['title'] ?? '');
         $lowContent = strtolower($item['content'] ?? '');
+        $matchedFilters = [];
 
         foreach ($filters as $f) {
             $lowF = strtolower(trim($f));
@@ -607,11 +608,11 @@ final class FeedController
             }
             $pattern = '/\b' . preg_quote($lowF, '/') . '\b/';
             if (preg_match($pattern, $lowTitle) || preg_match($pattern, $lowContent)) {
-                return true;
+                $matchedFilters[] = $f;
             }
         }
 
-        return false;
+        return $matchedFilters;
     }
 
     private function relativeTime(DateTime $date): string
@@ -854,7 +855,7 @@ TWIG
         {% endif %}
     {% else %}
         {% for item in items %}
-            <div class="card mb-3 shadow-sm border-0 border-start border-primary border-4">
+            <div class="card mb-3 shadow-sm border-0 border-start {{ item.isFiltered ? 'border-warning' : 'border-primary' }} border-4">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start mb-2 flex-column flex-sm-row">
                         <h5 class="card-title mb-1 mb-sm-0 me-sm-3">
@@ -866,6 +867,15 @@ TWIG
                             {{ item.relativeTime }}
                         </span>
                     </div>
+                    {% if item.isFiltered %}
+                        <div class="alert alert-warning py-2 px-3 mb-3 small" role="status">
+                            <i class="bi bi-funnel-fill"></i>
+                            This article would have been filtered because it matches:
+                            {% for filter in item.matchedFilters %}
+                                <span class="badge text-bg-warning ms-1">{{ filter }}</span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
                     {% if item.excerpt %}
                         <div class="card-text text-secondary" style="line-height: 1.6;">
                             <div class="excerpt">{{ item.excerpt|raw }}</div>
