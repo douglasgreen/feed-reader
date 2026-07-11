@@ -195,6 +195,7 @@ final readonly class ImportController
                 if (!property_exists($item, 'title')) {
                     continue;
                 }
+
                 if ($item->title === null) {
                     continue;
                 }
@@ -202,6 +203,7 @@ final readonly class ImportController
                 if (!property_exists($item, 'link')) {
                     continue;
                 }
+
                 if ($item->link === null) {
                     continue;
                 }
