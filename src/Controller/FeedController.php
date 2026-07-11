@@ -693,6 +693,7 @@ final readonly class FeedController
         if ($days >= 1) {
             return $days . ' day' . ($days > 1 ? 's' : '') . ' ago';
         }
+
         if ($hours >= 1) {
             return $hours . ' hour' . ($hours > 1 ? 's' : '') . ' ago';
         }
@@ -700,6 +701,7 @@ final readonly class FeedController
         if ($minutes >= 1) {
             return $minutes . ' minute' . ($minutes > 1 ? 's' : '') . ' ago';
         }
+
         return 'just now';
     }
 

@@ -192,12 +192,20 @@ final readonly class ImportController
             }
 
             foreach ($xml->channel->item as $item) {
-                if (!property_exists($item, 'title') || $item->title === null) {
+                if (!property_exists($item, 'title')) {
                     continue;
                 }
-                if (!property_exists($item, 'link') || $item->link === null) {
+                if ($item->title === null) {
                     continue;
                 }
+
+                if (!property_exists($item, 'link')) {
+                    continue;
+                }
+                if ($item->link === null) {
+                    continue;
+                }
+
                 $pub = null;
                 if (property_exists($item, 'pubDate') && $item->pubDate !== null) {
                     try {
@@ -226,6 +234,7 @@ final readonly class ImportController
                 if ($title === '') {
                     continue;
                 }
+
                 $link = '';
                 if (property_exists($entry, 'link') && $entry->link !== null) {
                     foreach ($entry->link as $l) {
@@ -240,6 +249,7 @@ final readonly class ImportController
                 if ($link === '') {
                     continue;
                 }
+
                 $dateStr = '';
                 if (property_exists($entry, 'updated') && $entry->updated !== null) {
                     $dateStr = (string) $entry->updated;
@@ -250,6 +260,7 @@ final readonly class ImportController
                 if ($dateStr === '') {
                     continue;
                 }
+
                 try {
                     $pub = new DateTime($dateStr);
                     $pub->setTimezone(new DateTimeZone('UTC'));

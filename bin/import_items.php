@@ -16,10 +16,8 @@ $controller = new ImportController($app);
 $result = $controller->process(true);
 
 if (!$quiet) {
-    if (!empty($result['errors'])) {
-        foreach ($result['errors'] as $err) {
-            error_log($err);
-        }
+    foreach ($result['errors'] as $err) {
+        error_log($err);
     }
     error_log(sprintf('Import completed. Added %s new items.', $result['new']));
 }

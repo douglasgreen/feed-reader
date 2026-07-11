@@ -23,6 +23,7 @@ final class AppContainer
 {
     private static ?self $instance = null;
 
+    /** @var array<string, mixed> */
     private array $config;
 
     private bool $cli = false;
