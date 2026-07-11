@@ -1,29 +1,32 @@
 <?php
 
+declare(strict_types=1);
+
 namespace DouglasGreen\FeedReader\Controller;
 
+use DateInterval;
 use DateTime;
 use DateTimeZone;
-use DateInterval;
 use DouglasGreen\FeedReader\AppContainer;
+use Exception;
 use PDO;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Session\Session;
 
-final class ImportController
+final readonly class ImportController
 {
-    private AppContainer $app;
     private PDO $pdo;
+
     private Request $request;
+
     private Session $session;
 
-    public function __construct(AppContainer $app)
+    public function __construct(private AppContainer $app)
     {
-        $this->app = $app;
-        $this->pdo = $app->getPdo();
-        $this->request = $app->getRequest();
-        $this->session = $app->getSession();
+        $this->pdo = $this->app->getPdo();
+        $this->request = $this->app->getRequest();
+        $this->session = $this->app->getSession();
     }
 
     public function execute(): RedirectResponse
@@ -34,7 +37,8 @@ final class ImportController
         if (!empty($result['errors'])) {
             $this->session->getFlashBag()->add('error', implode("\n", $result['errors']));
         }
-        $this->session->getFlashBag()->add('success', "Import completed. Added {$result['new']} new items.");
+
+        $this->session->getFlashBag()->add('success', sprintf('Import completed. Added %s new items.', $result['new']));
 
         return new RedirectResponse($this->request->getRequestUri());
     }
@@ -42,17 +46,17 @@ final class ImportController
     public function process(bool $force = false): array
     {
         // Delete items older than one week
-        $deleteStmt = $this->pdo->prepare("DELETE FROM items WHERE publish_date < UTC_TIMESTAMP() - INTERVAL 1 WEEK");
+        $deleteStmt = $this->pdo->prepare('DELETE FROM items WHERE publish_date < UTC_TIMESTAMP() - INTERVAL 1 WEEK');
         $deleteStmt->execute();
 
-        $feedsStmt = $this->pdo->query("SELECT id, name, url, next_read FROM feeds ORDER BY next_read ASC");
+        $feedsStmt = $this->pdo->query('SELECT id, name, url, next_read FROM feeds ORDER BY next_read ASC');
         $feeds = $feedsStmt->fetchAll(PDO::FETCH_ASSOC);
 
         $totalNew = 0;
         $errors = [];
 
         foreach ($feeds as $row) {
-            $feed_id = (int)$row['id'];
+            $feed_id = (int) $row['id'];
             $name = $row['name'];
             $url = $row['url'];
             $nextReadStr = $row['next_read'];
@@ -70,14 +74,14 @@ final class ImportController
             $error = $result['error'];
 
             if ($error) {
-                $errors[] = "Feed '$name': $error";
+                $errors[] = sprintf("Feed '%s': %s", $name, $error);
             }
 
             $newCount = 0;
             if (!empty($items)) {
                 $insertStmt = $this->pdo->prepare(
-                    "INSERT IGNORE INTO items (feed_id, title, link, content, publish_date, created_at) " .
-                    "VALUES (?, ?, ?, ?, ?, NOW())"
+                    'INSERT IGNORE INTO items (feed_id, title, link, content, publish_date, created_at) ' .
+                    'VALUES (?, ?, ?, ?, ?, NOW())',
                 );
 
                 foreach ($items as $item) {
@@ -100,12 +104,13 @@ final class ImportController
                         $ages[] = $age;
                     }
                 }
-                $interval = empty($ages) ? 3 * 3600 : max(3600, min(86400, (int) round(array_sum($ages) / count($ages))));
+
+                $interval = $ages === [] ? 3 * 3600 : max(3600, min(86400, (int) round(array_sum($ages) / count($ages))));
             }
 
             $next = clone $now;
-            $next->add(new DateInterval("PT{$interval}S"));
-            $updateStmt = $this->pdo->prepare("UPDATE feeds SET next_read = ? WHERE id = ?");
+            $next->add(new DateInterval(sprintf('PT%dS', $interval)));
+            $updateStmt = $this->pdo->prepare('UPDATE feeds SET next_read = ? WHERE id = ?');
             $updateStmt->execute([$next->format('Y-m-d H:i:s'), $feed_id]);
 
             $totalNew += $newCount;
@@ -131,7 +136,7 @@ final class ImportController
                 'sec-fetch-mode: navigate',
                 'sec-fetch-site: none',
                 'sec-fetch-user: ?1',
-                'Accept: application/rss+xml, application/xml, text/xml, text/html;q=0.9,*/*;q=0.8'
+                'Accept: application/rss+xml, application/xml, text/xml, text/html;q=0.9,*/*;q=0.8',
             ],
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_SSL_VERIFYPEER => false,
@@ -143,11 +148,12 @@ final class ImportController
             curl_close($ch);
             return ['items' => $items, 'error' => 'Failed to fetch feed: ' . $error];
         }
+
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
 
         if ($httpCode !== 200 || empty($xmlString)) {
-            return ['items' => $items, 'error' => 'Failed to fetch feed: ' . ($httpCode !== 200 ? "HTTP $httpCode" : "Empty response")];
+            return ['items' => $items, 'error' => 'Failed to fetch feed: ' . ($httpCode !== 200 ? 'HTTP ' . $httpCode : 'Empty response')];
         }
 
         $xml = @simplexml_load_string($xmlString);
@@ -157,74 +163,92 @@ final class ImportController
 
         $rootName = $xml->getName();
 
-        if ($rootName === 'rss' && isset($xml->channel->item)) {
+        if ($rootName === 'rss' && (property_exists($xml->channel, 'item') && $xml->channel->item !== null)) {
             $fallbackDate = null;
-            if (isset($xml->channel->lastBuildDate)) {
+            if (property_exists($xml->channel, 'lastBuildDate') && $xml->channel->lastBuildDate !== null) {
                 try {
-                    $fallbackDate = new DateTime((string)$xml->channel->lastBuildDate);
+                    $fallbackDate = new DateTime((string) $xml->channel->lastBuildDate);
                     $fallbackDate->setTimezone(new DateTimeZone('UTC'));
-                } catch (\Exception $e) {
+                } catch (Exception) {
                     // ignore
                 }
             }
 
             foreach ($xml->channel->item as $item) {
-                if (!isset($item->title) || !isset($item->link)) continue;
-
+                if (!property_exists($item, 'title') || $item->title === null) {
+                    continue;
+                }
+                if (!property_exists($item, 'link') || $item->link === null) {
+                    continue;
+                }
                 $pub = null;
-                if (isset($item->pubDate)) {
+                if (property_exists($item, 'pubDate') && $item->pubDate !== null) {
                     try {
-                        $pub = new DateTime((string)$item->pubDate);
+                        $pub = new DateTime((string) $item->pubDate);
                         $pub->setTimezone(new DateTimeZone('UTC'));
-                    } catch (\Exception $e) {}
-                } elseif ($fallbackDate) {
+                    } catch (Exception) {
+                    }
+                } elseif ($fallbackDate instanceof DateTime) {
                     $pub = clone $fallbackDate;
                 }
-                if (!$pub) continue;
+
+                if (!$pub instanceof DateTime) {
+                    continue;
+                }
 
                 $items[] = [
                     'publish_date' => $pub,
-                    'title' => $this->extractContent((string)$item->title),
-                    'link' => (string)$item->link,
-                    'content' => $this->extractContent((string)($item->description ?? ''))
+                    'title' => $this->extractContent((string) $item->title),
+                    'link' => (string) $item->link,
+                    'content' => $this->extractContent((string) ($item->description ?? '')),
                 ];
             }
-        } elseif ($rootName === 'feed' && isset($xml->entry)) {
+        } elseif ($rootName === 'feed' && (property_exists($xml, 'entry') && $xml->entry !== null)) {
             foreach ($xml->entry as $entry) {
-                $title = $this->extractContent((string)$entry->title);
-                if (!$title) continue;
-
+                $title = $this->extractContent((string) $entry->title);
+                if ($title === '') {
+                    continue;
+                }
                 $link = '';
-                if (isset($entry->link)) {
+                if (property_exists($entry, 'link') && $entry->link !== null) {
                     foreach ($entry->link as $l) {
-                        $rel = (string)($l['rel'] ?? '');
+                        $rel = (string) ($l['rel'] ?? '');
                         if ($rel === 'alternate' || empty($rel)) {
-                            $link = (string)($l['href'] ?? '');
+                            $link = (string) ($l['href'] ?? '');
                             break;
                         }
                     }
                 }
-                if (!$link) continue;
 
+                if ($link === '') {
+                    continue;
+                }
                 $dateStr = '';
-                if (isset($entry->updated)) $dateStr = (string)$entry->updated;
-                elseif (isset($entry->published)) $dateStr = (string)$entry->published;
-                if (!$dateStr) continue;
+                if (property_exists($entry, 'updated') && $entry->updated !== null) {
+                    $dateStr = (string) $entry->updated;
+                } elseif (property_exists($entry, 'published') && $entry->published !== null) {
+                    $dateStr = (string) $entry->published;
+                }
 
+                if ($dateStr === '') {
+                    continue;
+                }
                 try {
                     $pub = new DateTime($dateStr);
                     $pub->setTimezone(new DateTimeZone('UTC'));
-                } catch (\Exception $e) { continue; }
+                } catch (Exception) {
+                    continue;
+                }
 
-                $summary = (string)($entry->summary ?? '');
-                $contentNode = (string)($entry->content ?? '');
+                $summary = (string) ($entry->summary ?? '');
+                $contentNode = (string) ($entry->content ?? '');
                 $content = $this->extractContent($summary) ?: $this->extractContent($contentNode);
 
                 $items[] = [
                     'publish_date' => $pub,
                     'title' => $title,
                     'link' => $link,
-                    'content' => $content
+                    'content' => $content,
                 ];
             }
         } else {
@@ -246,7 +270,7 @@ final class ImportController
         }
 
         $rawContent = str_replace('&nbsp;', ' ', $encodedString);
-        $rawContent = str_replace('&#8217;', '\'', $rawContent);
+        $rawContent = str_replace('&#8217;', "'", $rawContent);
         return trim(html_entity_decode($rawContent, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
     }
 }

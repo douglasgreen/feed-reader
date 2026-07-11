@@ -1,8 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace DouglasGreen\FeedReader;
 
+use Exception;
 use PDO;
+use PDOException;
+use RuntimeException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
@@ -19,12 +24,18 @@ final class AppContainer
     private static ?self $instance = null;
 
     private array $config;
+
     private bool $cli = false;
+
     private ?PDO $pdo = null;
+
     private ?Request $request = null;
+
     private ?Session $session = null;
+
     private ?Environment $twig = null;
-    private float $startTime;
+
+    private readonly float $startTime;
 
     private function __construct()
     {
@@ -33,27 +44,27 @@ final class AppContainer
         $this->setupTimezone();
     }
 
-    private function __clone()
-    {
-    }
+    private function __clone() {}
 
     public function __wakeup()
     {
-        throw new \Exception("Cannot unserialize singleton");
+        throw new Exception('Cannot unserialize singleton');
     }
 
     public static function getInstance(?bool $cli = null): self
     {
-        if (self::$instance === null) {
+        if (!self::$instance instanceof \DouglasGreen\FeedReader\AppContainer) {
             self::$instance = new self();
         }
+
         if ($cli !== null) {
             self::$instance->cli = $cli;
         }
+
         return self::$instance;
     }
 
-    public function getConfig(string $key = null): mixed
+    public function getConfig(?string $key = null): mixed
     {
         if ($key === null) {
             return $this->config['parameters'];
@@ -66,6 +77,7 @@ final class AppContainer
             if (!isset($value[$k])) {
                 return null;
             }
+
             $value = $value[$k];
         }
 
@@ -74,7 +86,7 @@ final class AppContainer
 
     public function getPdo(): PDO
     {
-        if ($this->pdo === null) {
+        if (!$this->pdo instanceof PDO) {
             $dbConfig = $this->config['parameters']['database'];
 
             try {
@@ -85,10 +97,10 @@ final class AppContainer
                     [
                         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                    ]
+                    ],
                 );
-            } catch (\PDOException $e) {
-                throw new \RuntimeException('Database connection failed: ' . $e->getMessage());
+            } catch (PDOException $e) {
+                throw new RuntimeException('Database connection failed: ' . $e->getMessage(), $e->getCode(), $e);
             }
         }
 
@@ -97,15 +109,16 @@ final class AppContainer
 
     public function getRequest(): Request
     {
-        if ($this->request === null) {
+        if (!$this->request instanceof Request) {
             $this->request = Request::createFromGlobals();
         }
+
         return $this->request;
     }
 
     public function getSession(): Session
     {
-        if ($this->session === null) {
+        if (!$this->session instanceof Session) {
             if ($this->cli || PHP_SAPI === 'cli') {
                 // Use Mock storage for CLI (cron jobs, terminal, CGI cron invocations)
                 $this->session = new Session(new MockArraySessionStorage());
@@ -113,16 +126,18 @@ final class AppContainer
                 // Use Native storage for Web requests
                 $this->session = new Session(new NativeSessionStorage());
             }
+
             if (!$this->session->isStarted()) {
                 $this->session->start();
             }
         }
+
         return $this->session;
     }
 
     public function getTwig(): Environment
     {
-        if ($this->twig === null) {
+        if (!$this->twig instanceof Environment) {
             $loader = new ArrayLoader();
             $cacheDir = __DIR__ . '/../' . $this->config['parameters']['cache']['twig_cache_dir'];
 
@@ -137,6 +152,7 @@ final class AppContainer
                 'autoescape' => 'html',
             ]);
         }
+
         return $this->twig;
     }
 
@@ -168,8 +184,9 @@ final class AppContainer
     {
         $configFile = __DIR__ . '/../config/parameters.yml';
         if (!file_exists($configFile)) {
-            throw new \RuntimeException('Configuration file not found: ' . $configFile);
+            throw new RuntimeException('Configuration file not found: ' . $configFile);
         }
+
         $this->config = Yaml::parseFile($configFile);
     }
 

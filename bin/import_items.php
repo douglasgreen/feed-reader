@@ -21,5 +21,5 @@ if (!$quiet) {
             error_log($err);
         }
     }
-    error_log("Import completed. Added {$result['new']} new items.");
+    error_log(sprintf('Import completed. Added %s new items.', $result['new']));
 }
