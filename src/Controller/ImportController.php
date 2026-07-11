@@ -31,7 +31,7 @@ final readonly class ImportController
 
     public function execute(): RedirectResponse
     {
-        $force = $this->request->request->get('force', false);
+        $force = $this->request->request->getBoolean('force');
         $result = $this->process($force);
 
         if (!empty($result['errors'])) {
@@ -43,6 +43,9 @@ final readonly class ImportController
         return new RedirectResponse($this->request->getRequestUri());
     }
 
+    /**
+     * @return array{new: int, errors: list<string>}
+     */
     public function process(bool $force = false): array
     {
         // Delete items older than one week
@@ -50,6 +53,10 @@ final readonly class ImportController
         $deleteStmt->execute();
 
         $feedsStmt = $this->pdo->query('SELECT id, name, url, next_read FROM feeds ORDER BY next_read ASC');
+        if ($feedsStmt === false) {
+            throw new Exception('Failed to load feeds for import');
+        }
+
         $feeds = $feedsStmt->fetchAll(PDO::FETCH_ASSOC);
 
         $totalNew = 0;
@@ -119,9 +126,19 @@ final readonly class ImportController
         return ['new' => $totalNew, 'errors' => $errors];
     }
 
+    /**
+     * @return array{
+     *     items: list<array{publish_date: DateTime, title: string, link: string, content: string}>,
+     *     error: string
+     * }
+     */
     private function getItems(string $url): array
     {
         $items = [];
+        if ($url === '') {
+            return ['items' => $items, 'error' => 'Failed to fetch feed: Empty URL'];
+        }
+
         $ch = curl_init();
         curl_setopt_array($ch, [
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
@@ -152,7 +169,7 @@ final readonly class ImportController
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
 
-        if ($httpCode !== 200 || empty($xmlString)) {
+        if ($httpCode !== 200 || !is_string($xmlString) || $xmlString === '') {
             return ['items' => $items, 'error' => 'Failed to fetch feed: ' . ($httpCode !== 200 ? 'HTTP ' . $httpCode : 'Empty response')];
         }
 
