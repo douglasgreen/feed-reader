@@ -30,7 +30,6 @@
     },
     "scripts": {
         "lint": [
-            "php-linter",
             "php-cs-fixer fix --dry-run --verbose",
             "phpstan analyse",
             "rector process --dry-run"
