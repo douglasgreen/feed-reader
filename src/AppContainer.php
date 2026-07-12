@@ -45,8 +45,6 @@ final class AppContainer
         $this->setupTimezone();
     }
 
-    private function __clone() {}
-
     public function __wakeup()
     {
         throw new Exception('Cannot unserialize singleton');
@@ -155,11 +153,6 @@ final class AppContainer
         }
 
         return $this->twig;
-    }
-
-    public function getStartTime(): float
-    {
-        return $this->startTime;
     }
 
     public function getElapsedTime(): float
