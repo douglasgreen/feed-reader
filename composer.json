@@ -6,12 +6,12 @@
     "license": "MIT",
     "require": {
         "php": "^8.3",
-        "symfony/http-foundation": "^6.4",
-        "symfony/yaml": "^6.4",
+        "symfony/http-foundation": "^7.4",
+        "symfony/yaml": "^7.4",
         "twig/twig": "^3.22"
     },
     "require-dev": {
-        "douglasgreen/php-linter": "^1.0.0",
+        "douglasgreen/php-linter": "dev-main",
         "friendsofphp/php-cs-fixer": "^3.94.2",
         "phpstan/phpstan": "^2.1.39",
         "phpunit/phpunit": "^12.5.14",
