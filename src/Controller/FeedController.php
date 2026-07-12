@@ -610,7 +610,7 @@ final readonly class FeedController
     private function processItems(array $rawItems, array $filters, ?string $lastViewed): array
     {
         $filterStrings = array_map(
-            static fn (array $filter): string => $filter['filter_string'],
+            static fn(array $filter): string => $filter['filter_string'],
             $filters,
         );
         $allowedTags = [
@@ -748,8 +748,8 @@ final readonly class FeedController
 
     private function isValidUrl(string $url): bool
     {
-        return filter_var($url, FILTER_VALIDATE_URL) !== false &&
-               (str_starts_with($url, 'http://') || str_starts_with($url, 'https://'));
+        return filter_var($url, FILTER_VALIDATE_URL) !== false
+               && (str_starts_with($url, 'http://') || str_starts_with($url, 'https://'));
     }
 
     private function isGroupEmpty(int $groupId): bool

@@ -1,8 +1,7 @@
 <?php
 
-// modified: 2026-02-27
-
 use Rector\Config\RectorConfig;
+use Rector\Set\ValueObject\LevelSetList;
 use Rector\Strict\Rector\Empty_\DisallowedEmptyRuleFixerRector;
 use Rector\TypeDeclaration\Rector\StmtsAwareInterface\DeclareStrictTypesRector;
 use Rector\ValueObject\PhpVersion;
@@ -12,7 +11,6 @@ return RectorConfig::configure()
         __DIR__ . '/bin',
         __DIR__ . '/src',
     ])
-    ->withPhpSets(php83: true)
     ->withPreparedSets(
         deadCode: true,
         codeQuality: true,
@@ -21,6 +19,9 @@ return RectorConfig::configure()
         earlyReturn: true,
         phpunitCodeQuality: true,
     )
+    ->withSets([
+        LevelSetList::UP_TO_PHP_85,
+    ])
     ->withComposerBased(
         symfony: true,
     )

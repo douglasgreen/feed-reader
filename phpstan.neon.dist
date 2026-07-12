@@ -1,7 +1,11 @@
-# modified: 2026-02-26
+includes:
+  - vendor/shipmonk/dead-code-detector/rules.neon
 
 parameters:
   level: 8
+  phpVersion:
+    min: 80300
+    max: 80500
   paths:
     - bin
     - src

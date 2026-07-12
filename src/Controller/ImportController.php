@@ -87,8 +87,8 @@ final readonly class ImportController
             $newCount = 0;
             if (!empty($items)) {
                 $insertStmt = $this->pdo->prepare(
-                    'INSERT IGNORE INTO items (feed_id, title, link, content, publish_date, created_at) ' .
-                    'VALUES (?, ?, ?, ?, ?, NOW())',
+                    'INSERT IGNORE INTO items (feed_id, title, link, content, publish_date, created_at) '
+                    . 'VALUES (?, ?, ?, ?, ?, NOW())',
                 );
 
                 foreach ($items as $item) {
@@ -162,12 +162,10 @@ final readonly class ImportController
         $xmlString = curl_exec($ch);
         if ($xmlString === false) {
             $error = curl_error($ch);
-            curl_close($ch);
             return ['items' => $items, 'error' => 'Failed to fetch feed: ' . $error];
         }
 
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
 
         if ($httpCode !== 200 || !is_string($xmlString) || $xmlString === '') {
             return ['items' => $items, 'error' => 'Failed to fetch feed: ' . ($httpCode !== 200 ? 'HTTP ' . $httpCode : 'Empty response')];

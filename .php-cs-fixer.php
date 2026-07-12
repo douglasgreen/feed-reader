@@ -1,9 +1,8 @@
 <?php
-// modified: 2026-02-26
 
-use PhpCsFixer\Runner\Parallel\ParallelConfigFactory;
 use PhpCsFixer\Config;
 use PhpCsFixer\Finder;
+use PhpCsFixer\Runner\Parallel\ParallelConfigFactory;
 
 $finder = Finder::create()
     ->in([
@@ -17,8 +16,8 @@ $finder = Finder::create()
 
 return (new Config())
     ->setRules([
-        // PSR-12 Base
-        '@PSR12' => true,
+        // PER-CS Base (Tracks the latest available PER revision, e.g., v3.x)
+        '@PER-CS' => true,
 
         // Strict Type Safety
         'nullable_type_declaration_for_default_null_value' => true,
@@ -127,6 +126,9 @@ return (new Config())
         'binary_operator_spaces' => [
             'default' => 'single_space',
             'operators' => ['=>' => 'single_space'],
+        ],
+        'class_definition' => [
+            'space_before_parenthesis' => false,
         ],
         'concat_space' => ['spacing' => 'one'],
         'cast_spaces' => ['space' => 'single'],

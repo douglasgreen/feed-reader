@@ -1,9 +1,6 @@
-// modified: 2026-02-26
-
 import js from '@eslint/js';
 import pluginSecurity from 'eslint-plugin-security';
 import pluginUnicorn from 'eslint-plugin-unicorn';
-import pluginJsxA11y from 'eslint-plugin-jsx-a11y';
 import globals from 'globals';
 import eslintConfigPrettier from 'eslint-config-prettier';
 
@@ -13,20 +10,39 @@ import yamlConfig from './eslint.yaml.mjs';
 // ------------------------------------------------------------------
 // Global ignore patterns (replaces .eslintignore)
 // ------------------------------------------------------------------
-const ignorePatterns =[
-    'dist/**', 'node_modules/**', 'coverage/**', '*.config.*',
-    'playwright-report/**', 'test-results/**', 'build/**', '.cache/**',
-    '.next/**', 'composer.lock', 'vendor/**', '.eslintcache', '.grunt/**',
-    '.husky/_/**', '*.min.*', '.node_repl_history', '.npm/**',
-    'npm-debug.log*', 'package-lock.json', '.phpunit.result.cache',
-    '*.pyc', '__pycache__/**', '*.pyo', '.env.local.php',
-    'parameters.yml', 'var/**',
+const ignorePatterns = [
+    'dist/**',
+    'node_modules/**',
+    'coverage/**',
+    '*.config.*',
+    'playwright-report/**',
+    'test-results/**',
+    'build/**',
+    '.cache/**',
+    '.next/**',
+    'composer.lock',
+    'vendor/**',
+    '.eslintcache',
+    '.grunt/**',
+    '.husky/_/**',
+    '*.min.*',
+    '.node_repl_history',
+    '.npm/**',
+    'npm-debug.log*',
+    'package-lock.json',
+    '.phpunit.result.cache',
+    '*.pyc',
+    '__pycache__/**',
+    '*.pyo',
+    '.env.local.php',
+    'parameters.yml',
+    'var/**',
 ];
 
 // ------------------------------------------------------------------
 // Export the flat config
 // ------------------------------------------------------------------
-export default[
+export default [
     // Global ignores must be isolated in their own config object
     { ignores: ignorePatterns },
 
@@ -43,7 +59,7 @@ export default[
             },
         },
         rules: {
-            'no-console': ['warn', { allow:['warn', 'error'] }],
+            'no-console': ['warn', { allow: ['warn', 'error'] }],
         },
     },
 
@@ -65,15 +81,6 @@ export default[
         rules: {
             'unicorn/consistent-function-scoping': 'off',
             'unicorn/no-abusive-eslint-disable': 'error',
-        },
-    },
-
-    // Accessibility for Vue/JSX
-    {
-        files:['**/*.{vue,jsx,tsx}'],
-        plugins: { 'jsx-a11y': pluginJsxA11y },
-        rules: {
-            ...pluginJsxA11y.configs.recommended.rules,
         },
     },
 
