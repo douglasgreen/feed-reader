@@ -88,7 +88,7 @@ final readonly class ImportController
             if (!empty($items)) {
                 $insertStmt = $this->pdo->prepare(
                     'INSERT IGNORE INTO items (feed_id, title, link, content, publish_date, created_at) '
-                    . 'VALUES (?, ?, ?, ?, ?, NOW())',
+                    . 'VALUES (?, ?, ?, ?, ?, UTC_TIMESTAMP())',
                 );
 
                 foreach ($items as $item) {

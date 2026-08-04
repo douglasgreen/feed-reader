@@ -501,11 +501,11 @@ final readonly class FeedController
         foreach ($groupedFeeds as $groupData) {
             foreach ($groupData['feeds'] as $f) {
                 $stmt = $this->pdo->prepare('
-                    SELECT COUNT(*)
-                    FROM items i
-                    WHERE i.feed_id = ?
-                      AND i.publish_date > DATE_SUB(UTC_TIMESTAMP(), INTERVAL 30 DAY)
-                      AND (? IS NULL OR i.publish_date > ?)
+                SELECT COUNT(*)
+                FROM items i
+                WHERE i.feed_id = ?
+                  AND i.created_at > DATE_SUB(UTC_TIMESTAMP(), INTERVAL 30 DAY)
+                  AND (? IS NULL OR i.created_at > ?)
                 ');
                 $stmt->execute([$f['feed_id'], $f['last_viewed'], $f['last_viewed']]);
                 $counts[$f['url']] = (int) $stmt->fetchColumn();
@@ -542,12 +542,12 @@ final readonly class FeedController
         $cutoffDate = date('Y-m-d H:i:s', strtotime('-30 days'));
 
         $stmt = $this->pdo->prepare('
-            SELECT i.title, i.link, i.content, i.publish_date,
+            SELECT i.title, i.link, i.content, i.publish_date, i.created_at,
                    f.last_viewed as feed_last_viewed
             FROM items i
             JOIN feeds f ON i.feed_id = f.id
             WHERE i.feed_id = ?
-              AND i.publish_date > ?
+              AND i.created_at > ?
             ORDER BY i.publish_date DESC
             LIMIT 100
         ');
@@ -584,12 +584,12 @@ final readonly class FeedController
         $cutoffDate = date('Y-m-d H:i:s', strtotime('-30 days'));
 
         $stmt = $this->pdo->prepare('
-            SELECT i.title, i.link, i.content, i.publish_date,
+            SELECT i.title, i.link, i.content, i.publish_date, i.created_at,
                    f.last_viewed as feed_last_viewed, f.name as feed_name
             FROM items i
             JOIN feeds f ON i.feed_id = f.id
             WHERE (i.title LIKE ? OR i.content LIKE ?)
-              AND i.publish_date > ?
+              AND i.created_at > ?
             ORDER BY i.publish_date DESC
             LIMIT 100
         ');
@@ -630,6 +630,9 @@ final readonly class FeedController
             $pubDate = new DateTime($raw['publish_date'], new DateTimeZone('UTC'));
             $pubDate->setTimezone($displayTz);
 
+            $createdDate = new DateTime($raw['created_at'], new DateTimeZone('UTC'));
+            $createdDate->setTimezone($displayTz);
+
             $cleanContent = $this->closeUnclosedTags(strip_tags($raw['content'] ?? '', implode('', $allowedTags)));
 
             $lastViewedDate = null;
@@ -638,7 +641,7 @@ final readonly class FeedController
                 $lastViewedDate->setTimezone($displayTz);
             }
 
-            $isNew = (!$lastViewedDate instanceof DateTime || $pubDate > $lastViewedDate);
+            $isNew = (!$lastViewedDate instanceof DateTime || $createdDate > $lastViewedDate);
 
             $items[] = [
                 'pubDate' => $pubDate,
