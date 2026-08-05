@@ -62,6 +62,12 @@ final readonly class ImportController
         $totalNew = 0;
         $errors = [];
 
+        $now = new DateTime();
+        $now->setTimezone(new DateTimeZone('UTC'));
+
+        $weekAgo = clone $now;
+        $weekAgo->sub(new DateInterval('P7D'));
+
         foreach ($feeds as $row) {
             $feed_id = (int) $row['id'];
             $name = $row['name'];
@@ -95,6 +101,10 @@ final readonly class ImportController
                 );
 
                 foreach ($items as $item) {
+                    if ($item['publish_date'] < $weekAgo) {
+                        continue;
+                    }
+
                     $existsStmt->execute([$feed_id, $item['link']]);
                     if ($existsStmt->fetch() !== false) {
                         continue;
