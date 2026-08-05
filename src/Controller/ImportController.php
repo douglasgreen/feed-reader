@@ -86,12 +86,20 @@ final readonly class ImportController
 
             $newCount = 0;
             if (!empty($items)) {
+                $existsStmt = $this->pdo->prepare(
+                    'SELECT id FROM items WHERE feed_id = ? AND title = ? AND link = ? LIMIT 1',
+                );
                 $insertStmt = $this->pdo->prepare(
-                    'INSERT IGNORE INTO items (feed_id, title, link, content, publish_date, created_at) '
+                    'INSERT INTO items (feed_id, title, link, content, publish_date, created_at) '
                     . 'VALUES (?, ?, ?, ?, ?, UTC_TIMESTAMP())',
                 );
 
                 foreach ($items as $item) {
+                    $existsStmt->execute([$feed_id, $item['title'], $item['link']]);
+                    if ($existsStmt->fetch() !== false) {
+                        continue;
+                    }
+
                     $pubStr = $item['publish_date']->format('Y-m-d H:i:s');
                     $insertStmt->execute([$feed_id, $item['title'], $item['link'], $item['content'], $pubStr]);
                     if ($insertStmt->rowCount() == 1) {
