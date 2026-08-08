@@ -441,7 +441,7 @@ final readonly class FeedController
                    f.id as feed_id, f.name as feed_name,
                    f.url, f.last_viewed
             FROM groups g
-            JOIN feeds f ON g.id = f.group_id
+            LEFT JOIN feeds f ON g.id = f.group_id
             ORDER BY g.name, f.name
         ');
         if ($stmt === false) {
@@ -457,7 +457,9 @@ final readonly class FeedController
                 $grouped[$g] = ['group_id' => $feed['group_id'], 'feeds' => []];
             }
 
-            $grouped[$g]['feeds'][] = $feed;
+            if ($feed['feed_id'] !== null) {
+                $grouped[$g]['feeds'][] = $feed;
+            }
         }
 
         return $grouped;
