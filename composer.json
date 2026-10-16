@@ -10,7 +10,6 @@
     "twig/twig": "^3.22"
   },
   "require-dev": {
-    "douglasgreen/php-linter": "dev-main",
     "friendsofphp/php-cs-fixer": "^3.95",
     "phpstan/phpstan": "^2.2",
     "rector/rector": "^2.5",
