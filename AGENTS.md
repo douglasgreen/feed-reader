@@ -28,16 +28,20 @@ Personal RSS feed reader. Single PHP app (no framework) backed by MySQL.
 
 ## Commands
 
-PHP QA (run from repo root via Composer scripts):
+PHP QA (run from repo root via Composer scripts; Mago is the linter, formatter,
+and static analyzer, configured in `mago.toml`):
 
-- `composer lint` — runs `php-linter`, `php-cs-fixer fix --dry-run`,
-  `phpstan analyse`, `rector process --dry-run` in sequence. This is the
-  canonical check; `composer qa` is an alias.
-- `composer lint:fix` — applies `php-cs-fixer fix` and `rector process`.
-- `composer test` / `test:unit` / `test:integration` — invoke PHPUnit with
-  `--testsuite=Unit` / `Integration`, but **no `tests/` directory or
-  `phpunit.xml` exists yet**, so these scripts currently fail. Don't assume a
-  passing test suite exists.
+- `composer lint` — runs `mago lint` (read-only lint rules) then `mago analyze`
+  (static type analysis). This is the canonical check; `composer qa` is an
+  alias. `mago analyze` currently reports existing issues, so `composer lint`
+  exits non-zero until those are resolved.
+- `composer lint:fix` — runs `mago lint --fix` to apply auto-fixable lint rules,
+  then `mago format` to format the code.
+- `composer lint:upgrade` — runs `rector process` and applies changes directly
+  (no dry run). Rector is not part of `composer lint`, so run it deliberately
+  and review the diff.
+- No Composer test scripts are defined. There is no `tests/` directory or
+  `phpunit.xml`, so there is no test suite to run. Don't assume one exists.
 
 JS/Markdown QA (Node, dev-only):
 
@@ -50,12 +54,16 @@ plus `npm run format` if touching non-PHP files.
 
 ## Conventions and gotchas
 
-- PHPStan runs at **level 8** over `bin` and `src` only (`phpstan.neon.dist`).
-- Rector enforces `declare(strict_types=1)` via `DeclareStrictTypesRector` and
-  removes unused imports (`withImportNames`). Keep new files strict-typed.
-- php-cs-fixer uses `@PSR12` plus strict import ordering (alpha, class/function
-  /const) and `global_namespace_import` for classes/constants/functions. Global
-  classes like `PDO`, `Exception` are imported, not fully qualified.
+- Mago lints and analyzes `index.php`, `bin`, and `src` (`mago.toml`), with the
+  Symfony and PHPUnit linter integrations enabled. Several lint rules and
+  analyzer issue types are disabled or ignored there; follow that config rather
+  than working around it in code.
+- Rector (`rector.php`, paths `bin` and `src`) enforces `declare(strict_types=1)`
+  via `DeclareStrictTypesRector` and removes unused imports (`withImportNames`).
+  Keep new files strict-typed.
+- `mago.toml` has no formatter section, so `mago format` uses Mago's defaults.
+- Import global classes like `PDO` and `Exception` rather than fully qualifying
+  them.
 - Controllers write timestamps with `UTC_TIMESTAMP()` in SQL and convert to
   `display_timezone` only when rendering; do not mix local time into the DB.
 - `groups` is a reserved-ish word; queries reference the `groups` table
