@@ -10,6 +10,7 @@ use DateTimeZone;
 use DouglasGreen\FeedReader\AppContainer;
 use Exception;
 use PDO;
+use PDOStatement;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Session\Session;
@@ -44,13 +45,23 @@ final readonly class ImportController
         return new RedirectResponse($this->request->getRequestUri());
     }
 
+    private function prepare(string $sql): PDOStatement
+    {
+        $stmt = $this->pdo->prepare($sql);
+        if ($stmt === false) {
+            throw new Exception('Failed to prepare statement');
+        }
+
+        return $stmt;
+    }
+
     /**
      * @return array{new: int, errors: list<string>}
      */
     public function process(bool $force = false): array
     {
         // Delete items older than one week
-        $deleteStmt = $this->pdo->prepare('DELETE FROM items WHERE publish_date < UTC_TIMESTAMP() - INTERVAL 1 WEEK');
+        $deleteStmt = $this->prepare('DELETE FROM items WHERE publish_date < UTC_TIMESTAMP() - INTERVAL 1 WEEK');
         $deleteStmt->execute();
 
         $feedsStmt = $this->pdo->query('SELECT id, name, url, next_read FROM feeds ORDER BY next_read ASC');
@@ -93,8 +104,8 @@ final readonly class ImportController
 
             $newCount = 0;
             if (!empty($items)) {
-                $existsStmt = $this->pdo->prepare('SELECT id FROM items WHERE feed_id = ? AND link = ? LIMIT 1');
-                $insertStmt = $this->pdo->prepare(
+                $existsStmt = $this->prepare('SELECT id FROM items WHERE feed_id = ? AND link = ? LIMIT 1');
+                $insertStmt = $this->prepare(
                     'INSERT INTO items (feed_id, title, link, content, publish_date, created_at) '
                     . 'VALUES (?, ?, ?, ?, ?, UTC_TIMESTAMP())',
                 );
@@ -136,7 +147,7 @@ final readonly class ImportController
 
             $next = clone $now;
             $next->add(new DateInterval(sprintf('PT%dS', $interval)));
-            $updateStmt = $this->pdo->prepare('UPDATE feeds SET next_read = ? WHERE id = ?');
+            $updateStmt = $this->prepare('UPDATE feeds SET next_read = ? WHERE id = ?');
             $updateStmt->execute([$next->format('Y-m-d H:i:s'), $feed_id]);
 
             $totalNew += $newCount;
@@ -203,6 +214,7 @@ final readonly class ImportController
 
         $rootName = $xml->getName();
 
+        // @mago-expect analyzer:non-documented-property SimpleXML child elements are dynamic properties
         if ($rootName === 'rss' && (property_exists($xml->channel, 'item') && $xml->channel->item !== null)) {
             $fallbackDate = null;
             if (property_exists($xml->channel, 'lastBuildDate') && $xml->channel->lastBuildDate !== null) {
@@ -256,7 +268,11 @@ final readonly class ImportController
                     'content' => $this->extractContent((string) ($item->description ?? '')),
                 ];
             }
-        } elseif ($rootName === 'feed' && (property_exists($xml, 'entry') && $xml->entry !== null)) {
+        } elseif (
+            $rootName === 'feed'
+            // @mago-expect analyzer:non-documented-property SimpleXML child elements are dynamic properties
+            && (property_exists($xml, 'entry') && $xml->entry !== null)
+        ) {
             foreach ($xml->entry as $entry) {
                 $title = $this->extractContent((string) $entry->title);
                 if ($title === '') {

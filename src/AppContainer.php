@@ -94,7 +94,7 @@ final class AppContainer
                     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 ]);
             } catch (PDOException $e) {
-                throw new RuntimeException('Database connection failed: ' . $e->getMessage(), $e->getCode(), $e);
+                throw new RuntimeException('Database connection failed: ' . $e->getMessage(), (int) $e->getCode(), $e);
             }
         }
 

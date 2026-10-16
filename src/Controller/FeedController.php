@@ -10,6 +10,7 @@ use DOMDocument;
 use DouglasGreen\FeedReader\AppContainer;
 use Exception;
 use PDO;
+use PDOStatement;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -74,7 +75,7 @@ final readonly class FeedController
                     $importController = new ImportController($this->app);
                     return $importController->execute();
                 default:
-                    throw new Exception('Unknown action: ' . $action);
+                    throw new Exception('Unknown action: ' . (string) $action);
             }
         } catch (Exception $exception) {
             $this->session->getFlashBag()->add('error', $exception->getMessage());
@@ -91,26 +92,26 @@ final readonly class FeedController
         $this->validateFeedInput($name, $url, $groupId);
 
         // Check if group exists
-        $stmt = $this->pdo->prepare('SELECT id FROM groups WHERE id = ?');
+        $stmt = $this->prepare('SELECT id FROM groups WHERE id = ?');
         $stmt->execute([$groupId]);
         if (!$stmt->fetch()) {
             throw new Exception('Selected group does not exist');
         }
 
         // Check for duplicate URL
-        $stmt = $this->pdo->prepare('SELECT id FROM feeds WHERE url = ?');
+        $stmt = $this->prepare('SELECT id FROM feeds WHERE url = ?');
         $stmt->execute([$url]);
         if ($stmt->fetch()) {
             throw new Exception('A feed with this URL already exists');
         }
 
-        $stmt = $this->pdo->prepare('
+        $stmt = $this->prepare('
             INSERT INTO feeds (group_id, name, url, next_read, created_at, updated_at)
             VALUES (?, ?, ?, UTC_TIMESTAMP(), UTC_TIMESTAMP(), UTC_TIMESTAMP())
         ');
         $stmt->execute([$groupId, $name, $url]);
 
-        $newFeedId = $this->pdo->lastInsertId();
+        $newFeedId = (int) $this->pdo->lastInsertId();
 
         $this->session->getFlashBag()->add('success', 'Feed added successfully');
         return new RedirectResponse('?feed=' . $newFeedId);
@@ -130,7 +131,7 @@ final readonly class FeedController
         $this->validateFeedInput($name, $url, $groupId);
 
         // Get current feed
-        $stmt = $this->pdo->prepare('SELECT url FROM feeds WHERE id = ?');
+        $stmt = $this->prepare('SELECT url FROM feeds WHERE id = ?');
         $stmt->execute([$feedId]);
 
         $feed = $stmt->fetch();
@@ -139,7 +140,7 @@ final readonly class FeedController
         }
 
         // Check if group exists
-        $stmt = $this->pdo->prepare('SELECT id FROM groups WHERE id = ?');
+        $stmt = $this->prepare('SELECT id FROM groups WHERE id = ?');
         $stmt->execute([$groupId]);
         if (!$stmt->fetch()) {
             throw new Exception('Selected group does not exist');
@@ -147,14 +148,14 @@ final readonly class FeedController
 
         // Check for duplicate URL (if changed)
         if ($url !== $feed['url']) {
-            $stmt = $this->pdo->prepare('SELECT id FROM feeds WHERE url = ?');
+            $stmt = $this->prepare('SELECT id FROM feeds WHERE url = ?');
             $stmt->execute([$url]);
             if ($stmt->fetch()) {
                 throw new Exception('A feed with this URL already exists');
             }
         }
 
-        $stmt = $this->pdo->prepare('
+        $stmt = $this->prepare('
             UPDATE feeds
             SET name = ?, url = ?, group_id = ?, updated_at = UTC_TIMESTAMP()
             WHERE id = ?
@@ -178,7 +179,7 @@ final readonly class FeedController
             throw new Exception('Invalid feed ID');
         }
 
-        $stmt = $this->pdo->prepare('SELECT group_id FROM feeds WHERE id = ?');
+        $stmt = $this->prepare('SELECT group_id FROM feeds WHERE id = ?');
         $stmt->execute([$feedId]);
 
         $feed = $stmt->fetch();
@@ -188,12 +189,12 @@ final readonly class FeedController
 
         $groupId = $feed['group_id'];
 
-        $stmt = $this->pdo->prepare('DELETE FROM feeds WHERE id = ?');
+        $stmt = $this->prepare('DELETE FROM feeds WHERE id = ?');
         $stmt->execute([$feedId]);
 
         // Delete group if empty
         if ($this->isGroupEmpty($groupId)) {
-            $stmt = $this->pdo->prepare('DELETE FROM groups WHERE id = ?');
+            $stmt = $this->prepare('DELETE FROM groups WHERE id = ?');
             $stmt->execute([$groupId]);
         }
 
@@ -210,13 +211,13 @@ final readonly class FeedController
         }
 
         // Check for duplicate
-        $stmt = $this->pdo->prepare('SELECT id FROM filters WHERE filter_string = ?');
+        $stmt = $this->prepare('SELECT id FROM filters WHERE filter_string = ?');
         $stmt->execute([$filterString]);
         if ($stmt->fetch()) {
             throw new Exception('This filter already exists');
         }
 
-        $stmt = $this->pdo->prepare('
+        $stmt = $this->prepare('
             INSERT INTO filters (filter_string, created_at, updated_at)
             VALUES (?, UTC_TIMESTAMP(), UTC_TIMESTAMP())
         ');
@@ -239,7 +240,7 @@ final readonly class FeedController
             throw new Exception('Filter string is required');
         }
 
-        $stmt = $this->pdo->prepare('SELECT filter_string FROM filters WHERE id = ?');
+        $stmt = $this->prepare('SELECT filter_string FROM filters WHERE id = ?');
         $stmt->execute([$filterId]);
 
         $filter = $stmt->fetch();
@@ -249,14 +250,14 @@ final readonly class FeedController
 
         // Check for duplicate (if changed)
         if ($filterString !== $filter['filter_string']) {
-            $stmt = $this->pdo->prepare('SELECT id FROM filters WHERE filter_string = ?');
+            $stmt = $this->prepare('SELECT id FROM filters WHERE filter_string = ?');
             $stmt->execute([$filterString]);
             if ($stmt->fetch()) {
                 throw new Exception('This filter already exists');
             }
         }
 
-        $stmt = $this->pdo->prepare('
+        $stmt = $this->prepare('
             UPDATE filters
             SET filter_string = ?, updated_at = UTC_TIMESTAMP()
             WHERE id = ?
@@ -280,13 +281,13 @@ final readonly class FeedController
             throw new Exception('Invalid filter ID');
         }
 
-        $stmt = $this->pdo->prepare('SELECT id FROM filters WHERE id = ?');
+        $stmt = $this->prepare('SELECT id FROM filters WHERE id = ?');
         $stmt->execute([$filterId]);
         if (!$stmt->fetch()) {
             throw new Exception('Filter not found');
         }
 
-        $stmt = $this->pdo->prepare('DELETE FROM filters WHERE id = ?');
+        $stmt = $this->prepare('DELETE FROM filters WHERE id = ?');
         $stmt->execute([$filterId]);
 
         $this->session->getFlashBag()->add('success', 'Filter deleted successfully');
@@ -302,13 +303,13 @@ final readonly class FeedController
         }
 
         // Check for duplicate
-        $stmt = $this->pdo->prepare('SELECT id FROM groups WHERE name = ?');
+        $stmt = $this->prepare('SELECT id FROM groups WHERE name = ?');
         $stmt->execute([$groupName]);
         if ($stmt->fetch()) {
             throw new Exception('A group with this name already exists');
         }
 
-        $stmt = $this->pdo->prepare('
+        $stmt = $this->prepare('
             INSERT INTO groups (name, created_at, updated_at)
             VALUES (?, UTC_TIMESTAMP(), UTC_TIMESTAMP())
         ');
@@ -331,7 +332,7 @@ final readonly class FeedController
             throw new Exception('Group name is required');
         }
 
-        $stmt = $this->pdo->prepare('SELECT name FROM groups WHERE id = ?');
+        $stmt = $this->prepare('SELECT name FROM groups WHERE id = ?');
         $stmt->execute([$groupId]);
 
         $group = $stmt->fetch();
@@ -341,14 +342,14 @@ final readonly class FeedController
 
         // Check for duplicate (if changed)
         if ($groupName !== $group['name']) {
-            $stmt = $this->pdo->prepare('SELECT id FROM groups WHERE name = ?');
+            $stmt = $this->prepare('SELECT id FROM groups WHERE name = ?');
             $stmt->execute([$groupName]);
             if ($stmt->fetch()) {
                 throw new Exception('A group with this name already exists');
             }
         }
 
-        $stmt = $this->pdo->prepare('
+        $stmt = $this->prepare('
             UPDATE groups
             SET name = ?, updated_at = UTC_TIMESTAMP()
             WHERE id = ?
@@ -372,7 +373,7 @@ final readonly class FeedController
             throw new Exception('Invalid group ID');
         }
 
-        $stmt = $this->pdo->prepare('SELECT id FROM groups WHERE id = ?');
+        $stmt = $this->prepare('SELECT id FROM groups WHERE id = ?');
         $stmt->execute([$groupId]);
         if (!$stmt->fetch()) {
             throw new Exception('Group not found');
@@ -382,7 +383,7 @@ final readonly class FeedController
             throw new Exception('Group is not empty. Delete all feeds in this group first.');
         }
 
-        $stmt = $this->pdo->prepare('DELETE FROM groups WHERE id = ?');
+        $stmt = $this->prepare('DELETE FROM groups WHERE id = ?');
         $stmt->execute([$groupId]);
 
         $this->session->getFlashBag()->add('success', 'Group deleted successfully');
@@ -433,6 +434,36 @@ final readonly class FeedController
     }
 
     /**
+     * @return list<array<string, mixed>>
+     */
+    private function fetchRows(PDOStatement $stmt): array
+    {
+        /** @var list<array<string, mixed>> */
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function fetchRow(PDOStatement $stmt): ?array
+    {
+        /** @var array<string, mixed>|false $row */
+        $row = $stmt->fetch();
+
+        return $row === false ? null : $row;
+    }
+
+    private function prepare(string $sql): PDOStatement
+    {
+        $stmt = $this->pdo->prepare($sql);
+        if ($stmt === false) {
+            throw new Exception('Failed to prepare statement');
+        }
+
+        return $stmt;
+    }
+
+    /**
      * @return array<string, array{group_id: mixed, feeds: list<array<string, mixed>>}>
      */
     private function loadGroupedFeeds(): array
@@ -449,11 +480,11 @@ final readonly class FeedController
             throw new Exception('Failed to load feeds');
         }
 
-        $feeds = $stmt->fetchAll();
+        $feeds = $this->fetchRows($stmt);
 
         $grouped = [];
         foreach ($feeds as $feed) {
-            $g = $feed['group_name'];
+            $g = (string) $feed['group_name'];
             if (!isset($grouped[$g])) {
                 $grouped[$g] = ['group_id' => $feed['group_id'], 'feeds' => []];
             }
@@ -467,7 +498,7 @@ final readonly class FeedController
     }
 
     /**
-     * @return array<int, array{id: mixed, name: mixed}>
+     * @return list<array<string, mixed>>
      */
     private function loadAllGroups(): array
     {
@@ -476,11 +507,11 @@ final readonly class FeedController
             throw new Exception('Failed to load groups');
         }
 
-        return $stmt->fetchAll();
+        return $this->fetchRows($stmt);
     }
 
     /**
-     * @return array<int, array{id: mixed, filter_string: string}>
+     * @return list<array<string, mixed>>
      */
     private function loadAllFilters(): array
     {
@@ -489,7 +520,7 @@ final readonly class FeedController
             throw new Exception('Failed to load filters');
         }
 
-        return $stmt->fetchAll();
+        return $this->fetchRows($stmt);
     }
 
     /**
@@ -503,7 +534,7 @@ final readonly class FeedController
 
         foreach ($groupedFeeds as $groupData) {
             foreach ($groupData['feeds'] as $f) {
-                $stmt = $this->pdo->prepare('
+                $stmt = $this->prepare('
                 SELECT COUNT(*)
                 FROM items i
                 WHERE i.feed_id = ?
@@ -511,7 +542,7 @@ final readonly class FeedController
                   AND (? IS NULL OR i.created_at > ?)
                 ');
                 $stmt->execute([$f['feed_id'], $f['last_viewed'], $f['last_viewed']]);
-                $counts[$f['url']] = (int) $stmt->fetchColumn();
+                $counts[(string) $f['url']] = (int) $stmt->fetchColumn();
             }
         }
 
@@ -519,7 +550,7 @@ final readonly class FeedController
     }
 
     /**
-     * @param array<int, array{id: mixed, filter_string: string}> $filters
+     * @param list<array<string, mixed>> $filters
      *
      * @return array{
      *     items: list<array<string, mixed>>,
@@ -529,10 +560,10 @@ final readonly class FeedController
      */
     private function loadFeedItems(int $feedId, array $filters): array
     {
-        $stmt = $this->pdo->prepare('SELECT id, name, last_viewed FROM feeds WHERE id = ?');
+        $stmt = $this->prepare('SELECT id, name, last_viewed FROM feeds WHERE id = ?');
         $stmt->execute([$feedId]);
 
-        $feedInfo = $stmt->fetch();
+        $feedInfo = $this->fetchRow($stmt);
 
         if (!$feedInfo) {
             return [
@@ -542,9 +573,9 @@ final readonly class FeedController
             ];
         }
 
-        $cutoffDate = date('Y-m-d H:i:s', strtotime('-30 days'));
+        $cutoffDate = gmdate('Y-m-d H:i:s', time() - (30 * 86_400));
 
-        $stmt = $this->pdo->prepare('
+        $stmt = $this->prepare('
             SELECT i.title, i.link, i.content, i.publish_date, i.created_at,
                    f.last_viewed as feed_last_viewed
             FROM items i
@@ -556,19 +587,19 @@ final readonly class FeedController
         ');
         $stmt->execute([$feedId, $cutoffDate]);
 
-        $rawItems = $stmt->fetchAll();
+        $rawItems = $this->fetchRows($stmt);
 
         $items = $this->processItems($rawItems, $filters, $feedInfo['last_viewed']);
 
         // Update last viewed
-        $stmt = $this->pdo->prepare('UPDATE feeds SET last_viewed = UTC_TIMESTAMP() WHERE id = ?');
+        $stmt = $this->prepare('UPDATE feeds SET last_viewed = UTC_TIMESTAMP() WHERE id = ?');
         $stmt->execute([$feedId]);
 
         // Get feed data for editing
-        $stmt = $this->pdo->prepare('SELECT id, name, url, group_id FROM feeds WHERE id = ?');
+        $stmt = $this->prepare('SELECT id, name, url, group_id FROM feeds WHERE id = ?');
         $stmt->execute([$feedId]);
 
-        $feedData = $stmt->fetch();
+        $feedData = $this->fetchRow($stmt);
 
         return [
             'items' => $items,
@@ -578,15 +609,15 @@ final readonly class FeedController
     }
 
     /**
-     * @param array<int, array{id: mixed, filter_string: string}> $filters
+     * @param list<array<string, mixed>> $filters
      *
      * @return list<array<string, mixed>>
      */
     private function searchItems(string $query, array $filters): array
     {
-        $cutoffDate = date('Y-m-d H:i:s', strtotime('-30 days'));
+        $cutoffDate = gmdate('Y-m-d H:i:s', time() - (30 * 86_400));
 
-        $stmt = $this->pdo->prepare('
+        $stmt = $this->prepare('
             SELECT i.title, i.link, i.content, i.publish_date, i.created_at,
                    f.last_viewed as feed_last_viewed, f.name as feed_name
             FROM items i
@@ -599,20 +630,20 @@ final readonly class FeedController
 
         $searchPattern = '%' . $query . '%';
         $stmt->execute([$searchPattern, $searchPattern, $cutoffDate]);
-        $rawItems = $stmt->fetchAll();
+        $rawItems = $this->fetchRows($stmt);
 
         return $this->processItems($rawItems, $filters, null);
     }
 
     /**
      * @param array<int, array<string, mixed>> $rawItems
-     * @param array<int, array{id: mixed, filter_string: string}> $filters
+     * @param list<array<string, mixed>> $filters
      *
      * @return list<array<string, mixed>>
      */
     private function processItems(array $rawItems, array $filters, ?string $lastViewed): array
     {
-        $filterStrings = array_map(static fn(array $filter): string => $filter['filter_string'], $filters);
+        $filterStrings = array_map(static fn(array $filter): string => (string) $filter['filter_string'], $filters);
         $allowedTags = [
             '<a>',
             '<audio>',
@@ -791,7 +822,7 @@ final readonly class FeedController
 
     private function isGroupEmpty(int $groupId): bool
     {
-        $stmt = $this->pdo->prepare('SELECT COUNT(*) FROM feeds WHERE group_id = ?');
+        $stmt = $this->prepare('SELECT COUNT(*) FROM feeds WHERE group_id = ?');
         $stmt->execute([$groupId]);
         return (int) $stmt->fetchColumn() === 0;
     }
