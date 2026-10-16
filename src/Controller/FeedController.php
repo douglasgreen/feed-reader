@@ -27,8 +27,9 @@ final readonly class FeedController
 
     private Session $session;
 
-    public function __construct(private AppContainer $app)
-    {
+    public function __construct(
+        private AppContainer $app,
+    ) {
         $this->pdo = $this->app->getPdo();
         $this->request = $this->app->getRequest();
         $this->session = $this->app->getSession();
@@ -611,16 +612,45 @@ final readonly class FeedController
      */
     private function processItems(array $rawItems, array $filters, ?string $lastViewed): array
     {
-        $filterStrings = array_map(
-            static fn(array $filter): string => $filter['filter_string'],
-            $filters,
-        );
+        $filterStrings = array_map(static fn(array $filter): string => $filter['filter_string'], $filters);
         $allowedTags = [
-            '<a>', '<audio>', '<b>', '<blockquote>', '<br>', '<caption>', '<code>',
-            '<col>', '<colgroup>', '<dd>', '<del>', '<dl>', '<dt>', '<em>',
-            '<h1>', '<h2>', '<h3>', '<h4>', '<i>', '<img>', '<ins>', '<li>',
-            '<ol>', '<p>', '<source>', '<strong>', '<sub>', '<sup>', '<table>',
-            '<tbody>', '<td>', '<tfoot>', '<th>', '<thead>', '<tr>', '<ul>', '<video>',
+            '<a>',
+            '<audio>',
+            '<b>',
+            '<blockquote>',
+            '<br>',
+            '<caption>',
+            '<code>',
+            '<col>',
+            '<colgroup>',
+            '<dd>',
+            '<del>',
+            '<dl>',
+            '<dt>',
+            '<em>',
+            '<h1>',
+            '<h2>',
+            '<h3>',
+            '<h4>',
+            '<i>',
+            '<img>',
+            '<ins>',
+            '<li>',
+            '<ol>',
+            '<p>',
+            '<source>',
+            '<strong>',
+            '<sub>',
+            '<sup>',
+            '<table>',
+            '<tbody>',
+            '<td>',
+            '<tfoot>',
+            '<th>',
+            '<thead>',
+            '<tr>',
+            '<ul>',
+            '<video>',
         ];
 
         $displayTz = new DateTimeZone($this->app->getConfig('display_timezone'));
@@ -643,7 +673,7 @@ final readonly class FeedController
                 $lastViewedDate->setTimezone($displayTz);
             }
 
-            $isNew = (!$lastViewedDate instanceof DateTime || $createdDate > $lastViewedDate);
+            $isNew = !$lastViewedDate instanceof DateTime || $createdDate > $lastViewedDate;
 
             $items[] = [
                 'pubDate' => $pubDate,
@@ -753,8 +783,10 @@ final readonly class FeedController
 
     private function isValidUrl(string $url): bool
     {
-        return filter_var($url, FILTER_VALIDATE_URL) !== false
-               && (str_starts_with($url, 'http://') || str_starts_with($url, 'https://'));
+        return (
+            filter_var($url, FILTER_VALIDATE_URL) !== false
+            && (str_starts_with($url, 'http://') || str_starts_with($url, 'https://'))
+        );
     }
 
     private function isGroupEmpty(int $groupId): bool
@@ -791,549 +823,531 @@ final readonly class FeedController
         }
 
         // Header with search bar
-        $loader->setTemplate(
-            'header',
-            <<<'TWIG'
-<header class="bg-primary text-white py-3 mb-4">
-    <div class="container-fluid">
-        <div class="row align-items-center">
-            <div class="col-md-4">
-                <h1 class="h3 mb-0">📰 RSS Feed Reader</h1>
-            </div>
-            <div class="col-md-8">
-                <form method="GET" action="" class="d-flex">
-                    <input
-                        type="search"
-                        name="search"
-                        class="form-control me-2"
-                        placeholder="Search feed items..."
-                        value="{{ searchQuery }}"
-                        aria-label="Search"
-                    >
-                    <button type="submit" class="btn btn-light">
-                        <i class="bi bi-search"></i> Search
-                    </button>
-                    {% if searchQuery %}
-                    <a href="index.php" class="btn btn-outline-light ms-2">Clear</a>
-                    {% endif %}
-                </form>
-            </div>
-        </div>
-    </div>
-</header>
-TWIG
-        );
+        $loader->setTemplate('header', <<<'TWIG'
+            <header class="bg-primary text-white py-3 mb-4">
+                <div class="container-fluid">
+                    <div class="row align-items-center">
+                        <div class="col-md-4">
+                            <h1 class="h3 mb-0">📰 RSS Feed Reader</h1>
+                        </div>
+                        <div class="col-md-8">
+                            <form method="GET" action="" class="d-flex">
+                                <input
+                                    type="search"
+                                    name="search"
+                                    class="form-control me-2"
+                                    placeholder="Search feed items..."
+                                    value="{{ searchQuery }}"
+                                    aria-label="Search"
+                                >
+                                <button type="submit" class="btn btn-light">
+                                    <i class="bi bi-search"></i> Search
+                                </button>
+                                {% if searchQuery %}
+                                <a href="index.php" class="btn btn-outline-light ms-2">Clear</a>
+                                {% endif %}
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            TWIG);
 
         // Left sidebar
-        $loader->setTemplate(
-            'left_sidebar',
-            <<<'TWIG'
-<nav class="bg-white border-end p-3" style="min-height: calc(100vh - 200px);">
-    <h3 class="mb-4 text-primary fw-semibold fs-5">Feeds</h3>
+        $loader->setTemplate('left_sidebar', <<<'TWIG'
+            <nav class="bg-white border-end p-3" style="min-height: calc(100vh - 200px);">
+                <h3 class="mb-4 text-primary fw-semibold fs-5">Feeds</h3>
 
-    {% for groupName, groupData in groupedFeeds %}
-        <div class="group-header d-flex justify-content-between align-items-center text-secondary text-uppercase small fw-semibold ps-3 py-2 my-1">
-            <span>{{ groupName }}</span>
-            <div class="btn-group-action">
-                <button type="button" class="btn btn-sm btn-outline-secondary p-1 lh-1"
-                    data-bs-toggle="modal" data-bs-target="#editGroupModal"
-                    data-group-id="{{ groupData.group_id }}"
-                    data-group-name="{{ groupName }}"
-                    aria-label="Edit group">
-                    <i class="bi bi-pencil"></i>
-                </button>
-                <form method="POST" class="d-inline" onsubmit="return confirm('Delete this group? This can only be done if the group is empty.');">
-                    <input type="hidden" name="action" value="delete_group">
-                    <input type="hidden" name="group_id" value="{{ groupData.group_id }}">
-                    <input type="hidden" name="confirm" value="yes">
-                    <button type="submit" class="btn btn-sm btn-outline-danger p-1 lh-1" aria-label="Delete group">
-                        <i class="bi bi-trash"></i>
+                {% for groupName, groupData in groupedFeeds %}
+                    <div class="group-header d-flex justify-content-between align-items-center text-secondary text-uppercase small fw-semibold ps-3 py-2 my-1">
+                        <span>{{ groupName }}</span>
+                        <div class="btn-group-action">
+                            <button type="button" class="btn btn-sm btn-outline-secondary p-1 lh-1"
+                                data-bs-toggle="modal" data-bs-target="#editGroupModal"
+                                data-group-id="{{ groupData.group_id }}"
+                                data-group-name="{{ groupName }}"
+                                aria-label="Edit group">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <form method="POST" class="d-inline" onsubmit="return confirm('Delete this group? This can only be done if the group is empty.');">
+                                <input type="hidden" name="action" value="delete_group">
+                                <input type="hidden" name="group_id" value="{{ groupData.group_id }}">
+                                <input type="hidden" name="confirm" value="yes">
+                                <button type="submit" class="btn btn-sm btn-outline-danger p-1 lh-1" aria-label="Delete group">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    {% for feed in groupData.feeds %}
+                        {% set count = feedCounts[feed.url]|default(0) %}
+                        <div class="feed-item list-group-item list-group-item-action d-flex justify-content-between align-items-center {{ currentFeed == feed.feed_id ? 'active' : '' }}">
+                            <a href="?feed={{ feed.feed_id }}" class="text-decoration-none text-body stretched-link">
+                                {{ feed.feed_name }}
+                                {% if count > 0 %}<span class="badge bg-primary rounded-pill ms-2">{{ count }}</span>{% endif %}
+                            </a>
+                            <div class="btn-feed-action ms-2" style="z-index: 2;">
+                                <button type="button" class="btn btn-sm btn-outline-secondary p-1 lh-1"
+                                    data-bs-toggle="modal" data-bs-target="#editFeedModal"
+                                    data-feed-id="{{ feed.feed_id }}"
+                                    data-feed-name="{{ feed.feed_name }}"
+                                    data-feed-url="{{ feed.url }}"
+                                    data-feed-group="{{ feed.group_id }}"
+                                    aria-label="Edit feed">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger p-1 lh-1"
+                                    data-bs-toggle="modal" data-bs-target="#deleteFeedModal"
+                                    data-feed-id="{{ feed.feed_id }}"
+                                    data-feed-name="{{ feed.feed_name }}"
+                                    aria-label="Delete feed">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% endfor %}
+
+                <div class="mt-4 pt-3 border-top">
+                    <h6 class="text-secondary text-uppercase small fw-semibold mb-3">Management</h6>
+                    <button type="button" class="btn btn-sm btn-primary w-100 mb-2" data-bs-toggle="modal" data-bs-target="#addFeedModal">
+                        <i class="bi bi-plus-circle"></i> Add Feed
                     </button>
-                </form>
-            </div>
-        </div>
-        {% for feed in groupData.feeds %}
-            {% set count = feedCounts[feed.url]|default(0) %}
-            <div class="feed-item list-group-item list-group-item-action d-flex justify-content-between align-items-center {{ currentFeed == feed.feed_id ? 'active' : '' }}">
-                <a href="?feed={{ feed.feed_id }}" class="text-decoration-none text-body stretched-link">
-                    {{ feed.feed_name }}
-                    {% if count > 0 %}<span class="badge bg-primary rounded-pill ms-2">{{ count }}</span>{% endif %}
-                </a>
-                <div class="btn-feed-action ms-2" style="z-index: 2;">
-                    <button type="button" class="btn btn-sm btn-outline-secondary p-1 lh-1"
-                        data-bs-toggle="modal" data-bs-target="#editFeedModal"
-                        data-feed-id="{{ feed.feed_id }}"
-                        data-feed-name="{{ feed.feed_name }}"
-                        data-feed-url="{{ feed.url }}"
-                        data-feed-group="{{ feed.group_id }}"
-                        aria-label="Edit feed">
-                        <i class="bi bi-pencil"></i>
+                    <button type="button" class="btn btn-sm btn-outline-secondary w-100 mb-2" data-bs-toggle="modal" data-bs-target="#addGroupModal">
+                        <i class="bi bi-folder-plus"></i> Add Group
                     </button>
-                    <button type="button" class="btn btn-sm btn-outline-danger p-1 lh-1"
-                        data-bs-toggle="modal" data-bs-target="#deleteFeedModal"
-                        data-feed-id="{{ feed.feed_id }}"
-                        data-feed-name="{{ feed.feed_name }}"
-                        aria-label="Delete feed">
-                        <i class="bi bi-trash"></i>
+                    <button type="button" class="btn btn-sm btn-outline-secondary w-100" data-bs-toggle="modal" data-bs-target="#manageFiltersModal">
+                        <i class="bi bi-sliders"></i> Manage Filters
                     </button>
+                    <form method="POST" class="mt-2">
+                        <input type="hidden" name="action" value="import_feeds">
+                        <input type="hidden" name="force" value="1">
+                        <button type="submit" class="btn btn-sm btn-success w-100" onclick="return confirm('This will fetch all feeds immediately. Continue?');">
+                            <i class="bi bi-cloud-download"></i> Import All Feeds
+                        </button>
+                    </form>
                 </div>
-            </div>
-        {% endfor %}
-    {% endfor %}
-
-    <div class="mt-4 pt-3 border-top">
-        <h6 class="text-secondary text-uppercase small fw-semibold mb-3">Management</h6>
-        <button type="button" class="btn btn-sm btn-primary w-100 mb-2" data-bs-toggle="modal" data-bs-target="#addFeedModal">
-            <i class="bi bi-plus-circle"></i> Add Feed
-        </button>
-        <button type="button" class="btn btn-sm btn-outline-secondary w-100 mb-2" data-bs-toggle="modal" data-bs-target="#addGroupModal">
-            <i class="bi bi-folder-plus"></i> Add Group
-        </button>
-        <button type="button" class="btn btn-sm btn-outline-secondary w-100" data-bs-toggle="modal" data-bs-target="#manageFiltersModal">
-            <i class="bi bi-sliders"></i> Manage Filters
-        </button>
-        <form method="POST" class="mt-2">
-            <input type="hidden" name="action" value="import_feeds">
-            <input type="hidden" name="force" value="1">
-            <button type="submit" class="btn btn-sm btn-success w-100" onclick="return confirm('This will fetch all feeds immediately. Continue?');">
-                <i class="bi bi-cloud-download"></i> Import All Feeds
-            </button>
-        </form>
-    </div>
-</nav>
-TWIG
-        );
+            </nav>
+            TWIG);
 
         // Main content
-        $loader->setTemplate(
-            'main_content',
-            <<<'TWIG'
-<main class="p-4">
-    {% for type, messages in flashMessages %}
-        {% for message in messages %}
-            <div class="alert alert-{{ type == 'error' ? 'danger' : 'success' }} alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        {% endfor %}
-    {% endfor %}
+        $loader->setTemplate('main_content', <<<'TWIG'
+            <main class="p-4">
+                {% for type, messages in flashMessages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ type == 'error' ? 'danger' : 'success' }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endfor %}
 
-    <h2 class="text-dark mb-4 fw-semibold fs-1">{{ pageTitle }}</h2>
+                <h2 class="text-dark mb-4 fw-semibold fs-1">{{ pageTitle }}</h2>
 
-    {% if items is empty %}
-        {% if searchQuery %}
-            <div class="card shadow-sm">
-                <div class="card-body text-center text-muted">
-                    No results found for "{{ searchQuery }}".
-                </div>
-            </div>
-        {% elseif currentFeed %}
-            <div class="card shadow-sm">
-                <div class="card-body text-center text-muted">
-                    No recent articles found.
-                </div>
-            </div>
-        {% else %}
-            <div class="card shadow-sm">
-                <div class="card-body text-center text-muted">
-                    Select a feed from the sidebar or use the search bar to find articles.
-                </div>
-            </div>
-        {% endif %}
-    {% else %}
-        {% for item in items %}
-            <div class="card mb-3 shadow-sm border-0 border-start {{ item.isFiltered ? 'border-warning' : 'border-primary' }} border-4">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start mb-2 flex-column flex-sm-row">
-                        <h5 class="card-title mb-1 mb-sm-0 me-sm-3">
-                            <a href="{{ item.link }}" target="_blank" class="text-dark text-decoration-none item-link fs-5 fw-semibold">
-                                {{ item.title|raw }}
-                            </a>
-                        </h5>
-                        <span class="small {{ item.isNew ? 'text-primary fw-bold' : 'text-muted' }} text-nowrap">
-                            {{ item.relativeTime }}
-                        </span>
-                    </div>
-                    {% if item.isFiltered %}
-                        <div class="alert alert-warning py-2 px-3 mb-3 small" role="status">
-                            <i class="bi bi-funnel-fill"></i>
-                            This article would have been filtered because it matches:
-                            {% for filter in item.matchedFilters %}
-                                <span class="badge text-bg-warning ms-1">{{ filter }}</span>
-                            {% endfor %}
+                {% if items is empty %}
+                    {% if searchQuery %}
+                        <div class="card shadow-sm">
+                            <div class="card-body text-center text-muted">
+                                No results found for "{{ searchQuery }}".
+                            </div>
+                        </div>
+                    {% elseif currentFeed %}
+                        <div class="card shadow-sm">
+                            <div class="card-body text-center text-muted">
+                                No recent articles found.
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="card shadow-sm">
+                            <div class="card-body text-center text-muted">
+                                Select a feed from the sidebar or use the search bar to find articles.
+                            </div>
                         </div>
                     {% endif %}
-                    {% if item.excerpt %}
-                        <div class="card-text text-secondary" style="line-height: 1.6;">
-                            <div class="excerpt">{{ item.excerpt|raw }}</div>
+                {% else %}
+                    {% for item in items %}
+                        <div class="card mb-3 shadow-sm border-0 border-start {{ item.isFiltered ? 'border-warning' : 'border-primary' }} border-4">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2 flex-column flex-sm-row">
+                                    <h5 class="card-title mb-1 mb-sm-0 me-sm-3">
+                                        <a href="{{ item.link }}" target="_blank" class="text-dark text-decoration-none item-link fs-5 fw-semibold">
+                                            {{ item.title|raw }}
+                                        </a>
+                                    </h5>
+                                    <span class="small {{ item.isNew ? 'text-primary fw-bold' : 'text-muted' }} text-nowrap">
+                                        {{ item.relativeTime }}
+                                    </span>
+                                </div>
+                                {% if item.isFiltered %}
+                                    <div class="alert alert-warning py-2 px-3 mb-3 small" role="status">
+                                        <i class="bi bi-funnel-fill"></i>
+                                        This article would have been filtered because it matches:
+                                        {% for filter in item.matchedFilters %}
+                                            <span class="badge text-bg-warning ms-1">{{ filter }}</span>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                {% if item.excerpt %}
+                                    <div class="card-text text-secondary" style="line-height: 1.6;">
+                                        <div class="excerpt">{{ item.excerpt|raw }}</div>
+                                    </div>
+                                {% endif %}
+                                {% if item.feed %}
+                                    <div class="text-muted small mt-2">
+                                        <i class="bi bi-rss"></i> {{ item.feed }}
+                                    </div>
+                                {% endif %}
+                            </div>
                         </div>
-                    {% endif %}
-                    {% if item.feed %}
-                        <div class="text-muted small mt-2">
-                            <i class="bi bi-rss"></i> {{ item.feed }}
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-        {% endfor %}
-    {% endif %}
-</main>
-TWIG
-        );
+                    {% endfor %}
+                {% endif %}
+            </main>
+            TWIG);
 
         // Footer
-        $loader->setTemplate(
-            'footer',
-            <<<'TWIG'
-<footer class="bg-light border-top py-3 mt-4">
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col text-center text-muted small">
-                Memory: {{ memory }} | Time: {{ time }}s
-            </div>
-        </div>
-    </div>
-</footer>
-TWIG
-        );
+        $loader->setTemplate('footer', <<<'TWIG'
+            <footer class="bg-light border-top py-3 mt-4">
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col text-center text-muted small">
+                            Memory: {{ memory }} | Time: {{ time }}s
+                        </div>
+                    </div>
+                </div>
+            </footer>
+            TWIG);
 
         // Layout template (full HTML page)
-        $loader->setTemplate(
-            'layout',
-            <<<'TWIG'
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ pageTitle }}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
-    <style>
-.group-header .btn-group-action,
-.feed-item .btn-feed-action,
-.filter-item .btn-filter-action {
-    opacity: 0;
-    transition: opacity 0.2s ease-in-out;
-}
-.feed-item.active,
-.list-group-item.active {
-    font-weight: bold;
-}
-.group-header:hover .btn-group-action,
-.feed-item:hover .btn-feed-action,
-.filter-item:hover .btn-filter-action {
-    opacity: 1;
-}
-.item-link:hover {
-    color: var(--bs-primary) !important;
-}
-#right {
-    display: none;
-}
-    </style>
-</head>
-<body>
-    {% include 'header' %}
+        $loader->setTemplate('layout', <<<'TWIG'
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>{{ pageTitle }}</title>
+                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+                <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+                <style>
+            .group-header .btn-group-action,
+            .feed-item .btn-feed-action,
+            .filter-item .btn-filter-action {
+                opacity: 0;
+                transition: opacity 0.2s ease-in-out;
+            }
+            .feed-item.active,
+            .list-group-item.active {
+                font-weight: bold;
+            }
+            .group-header:hover .btn-group-action,
+            .feed-item:hover .btn-feed-action,
+            .filter-item:hover .btn-filter-action {
+                opacity: 1;
+            }
+            .item-link:hover {
+                color: var(--bs-primary) !important;
+            }
+            #right {
+                display: none;
+            }
+                </style>
+            </head>
+            <body>
+                {% include 'header' %}
 
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-md-2 p-0">
-                {% include 'left_sidebar' %}
-            </div>
-            <div class="col-md-10">
-                {% include 'main_content' %}
-            </div>
-        </div>
-    </div>
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-md-2 p-0">
+                            {% include 'left_sidebar' %}
+                        </div>
+                        <div class="col-md-10">
+                            {% include 'main_content' %}
+                        </div>
+                    </div>
+                </div>
 
-    {% include 'footer' %}
-    {% include 'modals' %}
+                {% include 'footer' %}
+                {% include 'modals' %}
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="assets/app.js"></script>
-</body>
-</html>
-TWIG
-        );
+                <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+                <script src="assets/app.js"></script>
+            </body>
+            </html>
+            TWIG);
 
         // Modals
-        $loader->setTemplate(
-            'modals',
-            <<<'TWIG'
-<!-- Add Feed Modal -->
-<div class="modal fade" id="addFeedModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title">Add Feed</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <form method="POST">
-                <div class="modal-body">
-                    <input type="hidden" name="action" value="add_feed">
-                    <div class="mb-3">
-                        <label for="addFeedName" class="form-label">Feed Name *</label>
-                        <input type="text" class="form-control" id="addFeedName" name="feed_name" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="addFeedUrl" class="form-label">Feed URL *</label>
-                        <input type="url" class="form-control" id="addFeedUrl" name="feed_url" placeholder="https://" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="addFeedGroup" class="form-label">Group *</label>
-                        <select class="form-select" id="addFeedGroup" name="group_id" required>
-                            <option value="">-- Select a group --</option>
-                            {% for group in allGroups %}
-                                <option value="{{ group.id }}">{{ group.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Add Feed</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Edit Feed Modal -->
-<div class="modal fade" id="editFeedModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title">Edit Feed</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <form method="POST">
-                <div class="modal-body">
-                    <input type="hidden" name="action" value="edit_feed">
-                    <input type="hidden" id="editFeedId" name="feed_id">
-                    <div class="mb-3">
-                        <label for="editFeedName" class="form-label">Feed Name *</label>
-                        <input type="text" class="form-control" id="editFeedName" name="feed_name" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editFeedUrl" class="form-label">Feed URL *</label>
-                        <input type="url" class="form-control" id="editFeedUrl" name="feed_url" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editFeedGroup" class="form-label">Group *</label>
-                        <select class="form-select" id="editFeedGroup" name="group_id" required>
-                            {% for group in allGroups %}
-                                <option value="{{ group.id }}">{{ group.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Delete Feed Modal -->
-<div class="modal fade" id="deleteFeedModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title">Delete Feed</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p>Are you sure you want to delete the feed <strong id="deleteFeedName"></strong>?</p>
-                <p class="text-muted small">This action cannot be undone.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form method="POST" class="d-inline">
-                    <input type="hidden" name="action" value="delete_feed">
-                    <input type="hidden" id="deleteFeedId" name="feed_id">
-                    <input type="hidden" name="confirm" value="yes">
-                    <button type="submit" class="btn btn-danger">Delete Feed</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Add Group Modal -->
-<div class="modal fade" id="addGroupModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title">Add Group</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <form method="POST">
-                <div class="modal-body">
-                    <input type="hidden" name="action" value="add_group">
-                    <div class="mb-3">
-                        <label for="addGroupName" class="form-label">Group Name *</label>
-                        <input type="text" class="form-control" id="addGroupName" name="group_name" required>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Add Group</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Edit Group Modal -->
-<div class="modal fade" id="editGroupModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Edit Group</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form method="POST">
-                <div class="modal-body">
-                    <input type="hidden" name="action" value="edit_group">
-                    <input type="hidden" id="editGroupId" name="group_id">
-                    <div class="mb-3">
-                        <label for="editGroupName" class="form-label">Group Name *</label>
-                        <input type="text" class="form-control" id="editGroupName" name="group_name" required>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Manage Filters Modal -->
-<div class="modal fade" id="manageFiltersModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Manage Filters</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                {% if allFilters is empty %}
-                    <p class="text-muted">No filters added yet.</p>
-                {% else %}
-                    <div class="list-group">
-                        {% for filter in allFilters %}
-                            <div class="filter-item list-group-item d-flex justify-content-between align-items-center">
-                                <span>{{ filter.filter_string }}</span>
-                                <div class="btn-filter-action">
-                                    <button type="button" class="btn btn-sm btn-outline-secondary me-2"
-                                        data-bs-toggle="modal" data-bs-target="#editFilterModal"
-                                        data-filter-id="{{ filter.id }}"
-                                        data-filter-string="{{ filter.filter_string }}">
-                                        <i class="bi bi-pencil"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-outline-danger"
-                                        data-bs-toggle="modal" data-bs-target="#deleteFilterModal"
-                                        data-filter-id="{{ filter.id }}"
-                                        data-filter-string="{{ filter.filter_string }}">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
+        $loader->setTemplate('modals', <<<'TWIG'
+            <!-- Add Feed Modal -->
+            <div class="modal fade" id="addFeedModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title">Add Feed</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <form method="POST">
+                            <div class="modal-body">
+                                <input type="hidden" name="action" value="add_feed">
+                                <div class="mb-3">
+                                    <label for="addFeedName" class="form-label">Feed Name *</label>
+                                    <input type="text" class="form-control" id="addFeedName" name="feed_name" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="addFeedUrl" class="form-label">Feed URL *</label>
+                                    <input type="url" class="form-control" id="addFeedUrl" name="feed_url" placeholder="https://" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="addFeedGroup" class="form-label">Group *</label>
+                                    <select class="form-select" id="addFeedGroup" name="group_id" required>
+                                        <option value="">-- Select a group --</option>
+                                        {% for group in allGroups %}
+                                            <option value="{{ group.id }}">{{ group.name }}</option>
+                                        {% endfor %}
+                                    </select>
                                 </div>
                             </div>
-                        {% endfor %}
-                    </div>
-                {% endif %}
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addFilterModal">
-                    <i class="bi bi-plus-circle"></i> Add New Filter
-                </button>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Add Filter Modal -->
-<div class="modal fade" id="addFilterModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title">Add Filter</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <form method="POST">
-                <div class="modal-body">
-                    <input type="hidden" name="action" value="add_filter">
-                    <div class="mb-3">
-                        <label for="addFilterString" class="form-label">Filter String *</label>
-                        <input type="text" class="form-control" id="addFilterString" name="filter_string" required>
-                        <small class="form-text text-muted">Matches whole words in titles and content (case-insensitive).</small>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-primary">Add Feed</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Add Filter</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Edit Filter Modal -->
-<div class="modal fade" id="editFilterModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Edit Filter</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form method="POST">
-                <div class="modal-body">
-                    <input type="hidden" name="action" value="edit_filter">
-                    <input type="hidden" id="editFilterId" name="filter_id">
-                    <div class="mb-3">
-                        <label for="editFilterString" class="form-label">Filter String *</label>
-                        <input type="text" class="form-control" id="editFilterString" name="filter_string" required>
+
+            <!-- Edit Feed Modal -->
+            <div class="modal fade" id="editFeedModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title">Edit Feed</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <form method="POST">
+                            <div class="modal-body">
+                                <input type="hidden" name="action" value="edit_feed">
+                                <input type="hidden" id="editFeedId" name="feed_id">
+                                <div class="mb-3">
+                                    <label for="editFeedName" class="form-label">Feed Name *</label>
+                                    <input type="text" class="form-control" id="editFeedName" name="feed_name" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="editFeedUrl" class="form-label">Feed URL *</label>
+                                    <input type="url" class="form-control" id="editFeedUrl" name="feed_url" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="editFeedGroup" class="form-label">Group *</label>
+                                    <select class="form-select" id="editFeedGroup" name="group_id" required>
+                                        {% for group in allGroups %}
+                                            <option value="{{ group.id }}">{{ group.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-primary">Save Changes</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+            </div>
 
-<!-- Delete Filter Modal -->
-<div class="modal fade" id="deleteFilterModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title">Delete Filter</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            <!-- Delete Feed Modal -->
+            <div class="modal fade" id="deleteFeedModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header bg-danger text-white">
+                            <h5 class="modal-title">Delete Feed</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>Are you sure you want to delete the feed <strong id="deleteFeedName"></strong>?</p>
+                            <p class="text-muted small">This action cannot be undone.</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <form method="POST" class="d-inline">
+                                <input type="hidden" name="action" value="delete_feed">
+                                <input type="hidden" id="deleteFeedId" name="feed_id">
+                                <input type="hidden" name="confirm" value="yes">
+                                <button type="submit" class="btn btn-danger">Delete Feed</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="modal-body">
-                <p>Are you sure you want to delete the filter <strong id="deleteFilterName"></strong>?</p>
+
+            <!-- Add Group Modal -->
+            <div class="modal fade" id="addGroupModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title">Add Group</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <form method="POST">
+                            <div class="modal-body">
+                                <input type="hidden" name="action" value="add_group">
+                                <div class="mb-3">
+                                    <label for="addGroupName" class="form-label">Group Name *</label>
+                                    <input type="text" class="form-control" id="addGroupName" name="group_name" required>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-primary">Add Group</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form method="POST" class="d-inline">
-                    <input type="hidden" name="action" value="delete_filter">
-                    <input type="hidden" id="deleteFilterId" name="filter_id">
-                    <input type="hidden" name="confirm" value="yes">
-                    <button type="submit" class="btn btn-danger">Delete Filter</button>
-                </form>
+
+            <!-- Edit Group Modal -->
+            <div class="modal fade" id="editGroupModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Edit Group</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <form method="POST">
+                            <div class="modal-body">
+                                <input type="hidden" name="action" value="edit_group">
+                                <input type="hidden" id="editGroupId" name="group_id">
+                                <div class="mb-3">
+                                    <label for="editGroupName" class="form-label">Group Name *</label>
+                                    <input type="text" class="form-control" id="editGroupName" name="group_name" required>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-primary">Save Changes</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
-</div>
-TWIG
-        );
+
+            <!-- Manage Filters Modal -->
+            <div class="modal fade" id="manageFiltersModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Manage Filters</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            {% if allFilters is empty %}
+                                <p class="text-muted">No filters added yet.</p>
+                            {% else %}
+                                <div class="list-group">
+                                    {% for filter in allFilters %}
+                                        <div class="filter-item list-group-item d-flex justify-content-between align-items-center">
+                                            <span>{{ filter.filter_string }}</span>
+                                            <div class="btn-filter-action">
+                                                <button type="button" class="btn btn-sm btn-outline-secondary me-2"
+                                                    data-bs-toggle="modal" data-bs-target="#editFilterModal"
+                                                    data-filter-id="{{ filter.id }}"
+                                                    data-filter-string="{{ filter.filter_string }}">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                                    data-bs-toggle="modal" data-bs-target="#deleteFilterModal"
+                                                    data-filter-id="{{ filter.id }}"
+                                                    data-filter-string="{{ filter.filter_string }}">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addFilterModal">
+                                <i class="bi bi-plus-circle"></i> Add New Filter
+                            </button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add Filter Modal -->
+            <div class="modal fade" id="addFilterModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title">Add Filter</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <form method="POST">
+                            <div class="modal-body">
+                                <input type="hidden" name="action" value="add_filter">
+                                <div class="mb-3">
+                                    <label for="addFilterString" class="form-label">Filter String *</label>
+                                    <input type="text" class="form-control" id="addFilterString" name="filter_string" required>
+                                    <small class="form-text text-muted">Matches whole words in titles and content (case-insensitive).</small>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-primary">Add Filter</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Edit Filter Modal -->
+            <div class="modal fade" id="editFilterModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Edit Filter</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <form method="POST">
+                            <div class="modal-body">
+                                <input type="hidden" name="action" value="edit_filter">
+                                <input type="hidden" id="editFilterId" name="filter_id">
+                                <div class="mb-3">
+                                    <label for="editFilterString" class="form-label">Filter String *</label>
+                                    <input type="text" class="form-control" id="editFilterString" name="filter_string" required>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-primary">Save Changes</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Delete Filter Modal -->
+            <div class="modal fade" id="deleteFilterModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header bg-danger text-white">
+                            <h5 class="modal-title">Delete Filter</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>Are you sure you want to delete the filter <strong id="deleteFilterName"></strong>?</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <form method="POST" class="d-inline">
+                                <input type="hidden" name="action" value="delete_filter">
+                                <input type="hidden" id="deleteFilterId" name="filter_id">
+                                <input type="hidden" name="confirm" value="yes">
+                                <button type="submit" class="btn btn-danger">Delete Filter</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            TWIG);
     }
 }

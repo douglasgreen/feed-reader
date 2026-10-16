@@ -22,8 +22,9 @@ final readonly class ImportController
 
     private Session $session;
 
-    public function __construct(private AppContainer $app)
-    {
+    public function __construct(
+        private AppContainer $app,
+    ) {
         $this->pdo = $this->app->getPdo();
         $this->request = $this->app->getRequest();
         $this->session = $this->app->getSession();
@@ -92,9 +93,7 @@ final readonly class ImportController
 
             $newCount = 0;
             if (!empty($items)) {
-                $existsStmt = $this->pdo->prepare(
-                    'SELECT id FROM items WHERE feed_id = ? AND link = ? LIMIT 1',
-                );
+                $existsStmt = $this->pdo->prepare('SELECT id FROM items WHERE feed_id = ? AND link = ? LIMIT 1');
                 $insertStmt = $this->pdo->prepare(
                     'INSERT INTO items (feed_id, title, link, content, publish_date, created_at) '
                     . 'VALUES (?, ?, ?, ?, ?, UTC_TIMESTAMP())',
@@ -130,7 +129,9 @@ final readonly class ImportController
                     }
                 }
 
-                $interval = $ages === [] ? 3 * 3600 : max(3600, min(86400, (int) round(array_sum($ages) / count($ages))));
+                $interval = $ages === []
+                    ? 3 * 3600
+                    : max(3600, min(86_400, (int) round(array_sum($ages) / count($ages))));
             }
 
             $next = clone $now;
@@ -186,7 +187,10 @@ final readonly class ImportController
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
         if ($httpCode !== 200 || !is_string($xmlString) || $xmlString === '') {
-            return ['items' => $items, 'error' => 'Failed to fetch feed: ' . ($httpCode !== 200 ? 'HTTP ' . $httpCode : 'Empty response')];
+            return [
+                'items' => $items,
+                'error' => 'Failed to fetch feed: ' . ($httpCode !== 200 ? 'HTTP ' . $httpCode : 'Empty response'),
+            ];
         }
 
         $xml = @simplexml_load_string($xmlString);

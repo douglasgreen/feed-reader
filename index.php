@@ -18,7 +18,6 @@ try {
     // Execute and send response
     $response = $controller->execute();
     $response->send();
-
 } catch (Exception $e) {
     http_response_code(500);
     echo '<!DOCTYPE html><html><head><title>Error</title></head><body>';

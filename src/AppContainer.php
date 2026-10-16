@@ -89,15 +89,10 @@ final class AppContainer
             $dbConfig = $this->config['parameters']['database'];
 
             try {
-                $this->pdo = new PDO(
-                    $dbConfig['dsn'],
-                    $dbConfig['username'],
-                    $dbConfig['password'],
-                    [
-                        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                    ],
-                );
+                $this->pdo = new PDO($dbConfig['dsn'], $dbConfig['username'], $dbConfig['password'], [
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                ]);
             } catch (PDOException $e) {
                 throw new RuntimeException('Database connection failed: ' . $e->getMessage(), $e->getCode(), $e);
             }
@@ -142,7 +137,7 @@ final class AppContainer
 
             // Ensure cache directory exists
             if (!is_dir($cacheDir)) {
-                mkdir($cacheDir, 0755, true);
+                mkdir($cacheDir, 0o755, true);
             }
 
             $this->twig = new Environment($loader, [
@@ -166,7 +161,7 @@ final class AppContainer
         $units = ['B', 'KB', 'MB', 'GB'];
         $i = 0;
 
-        while ($bytes >= 1024 && $i < count($units) - 1) {
+        while ($bytes >= 1024 && $i < (count($units) - 1)) {
             $bytes /= 1024;
             $i++;
         }
