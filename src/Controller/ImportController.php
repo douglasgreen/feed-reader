@@ -111,7 +111,7 @@ final readonly class ImportController
 
                     $pubStr = $item['publish_date']->format('Y-m-d H:i:s');
                     $insertStmt->execute([$feed_id, $item['title'], $item['link'], $item['content'], $pubStr]);
-                    if ($insertStmt->rowCount() == 1) {
+                    if ($insertStmt->rowCount() === 1) {
                         $newCount++;
                     }
                 }
@@ -193,7 +193,10 @@ final readonly class ImportController
             ];
         }
 
-        $xml = @simplexml_load_string($xmlString);
+        $previousErrorMode = libxml_use_internal_errors(true);
+        $xml = simplexml_load_string($xmlString);
+        libxml_clear_errors();
+        libxml_use_internal_errors($previousErrorMode);
         if (!$xml) {
             return ['items' => $items, 'error' => 'Invalid XML response'];
         }
@@ -207,7 +210,8 @@ final readonly class ImportController
                     $fallbackDate = new DateTime((string) $xml->channel->lastBuildDate);
                     $fallbackDate->setTimezone(new DateTimeZone('UTC'));
                 } catch (Exception) {
-                    // ignore
+                    // Unparseable lastBuildDate: items without pubDate are skipped
+                    $fallbackDate = null;
                 }
             }
 
@@ -234,6 +238,8 @@ final readonly class ImportController
                         $pub = new DateTime((string) $item->pubDate);
                         $pub->setTimezone(new DateTimeZone('UTC'));
                     } catch (Exception) {
+                        // Unparseable pubDate: the item is skipped below
+                        $pub = null;
                     }
                 } elseif ($fallbackDate instanceof DateTime) {
                     $pub = clone $fallbackDate;
