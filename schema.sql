@@ -38,8 +38,8 @@ CREATE TABLE `groups` (
 CREATE TABLE `items` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `feed_id` int(11) NOT NULL,
-  `title` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `link` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `title` varchar(1000) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `link` varchar(500) COLLATE utf8mb4_unicode_ci NOT NULL,
   `content` text COLLATE utf8mb4_unicode_ci,
   `publish_date` datetime NOT NULL,
   `created_at` datetime NOT NULL,
